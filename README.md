@@ -20,6 +20,7 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 ## Requirements
 * perl version 5.22.0 or later
 * ffmpeg version 2.8.3 or later
+* libmp3lame (came from lame package on Arch, not sure where else this is stored)
 
 You will also require the following perl modules:
 * autodie
