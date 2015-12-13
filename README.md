@@ -1,5 +1,6 @@
 # AAXtoMP3
-The purpose of this software is to convert AAX files to a more common MP3 format.
+The purpose of this software is to convert AAX files to a more common MP3 format
+through a basic perl script frontend to FFMPEG.
 
 Audible uses this file format to maintain DRM restrictions on their audio
 books and if you download your book through your library it will be
@@ -16,8 +17,42 @@ You will need your four byte authitication code that comes from Audible's
 servers. This will be used by ffmpeg to perform the initial audio convert. You
 can obtain this string from a tool like [audible-activator](https://github.com/inAudible-NG/audible-activator).
 
-## Anti-Piracy Notice
+## Requirements
+* perl version 5.22.0 or later
+* ffmpeg version 2.8.3 or later
 
+You will also require the following perl modules:
+* autodie
+* Getopt::Long
+* File::Basename
+* IO::CaptureOutput
+
+I would suggest installing cpanminus either through CPAN or (preferably) through your
+distro's repositories. Take note that many perl modules can be packaged in your repos
+as well so take a look there before resorting to cpan/cpanminus.
+
+## Usage
+```
+perl AAXtoMP3.pl -a AUTHCODE -i AAXFILE -v -c
+```
+* -a: **your** Audible auth code (it won't correctly decode otherwise) (required)
+* -i: the input AAX file to be converted (required) 
+* -v: verbose (optional)
+* -c: Convert to chapters based on input file's metadata information
+
+## Known issues
+Currently the chapters mode (activated by the -c flag) does not work correctly.
+Parsing the metadata works fine but when the timestamps are converted to
+HH:MM:SS.xxx format there is some sort of hickup. It could be that Audible has some
+delay in the file to prevent this, but starting from Chapter 2 of the book it will
+no longer sync. I don't know if I will ever fix this, so avoid using the -c flag for now
+to produce one large MP3 file for the audiobook.
+
+Also this was tested on Linux with the above requirements. No effort will be made to
+port this work to any other operating system, though it may work fine. Want a Windows/
+OSX port? You'll have to fork the work.
+
+## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simplys allows the user to
 use their own encryption key (fetched from Audible servers) to decrypt the
 audiobook in the same manner that the official audiobook playing software does.
