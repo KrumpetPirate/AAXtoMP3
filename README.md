@@ -34,7 +34,7 @@ as well so take a look there before resorting to cpan/cpanminus.
 
 ## Usage
 ```
-perl AAXtoMP3.pl -a AUTHCODE -i AAXFILE -v -c
+perl AAXtoMP3.pl -a AUTHCODE -i AAXFILE -v
 ```
 * -a: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * -i: the input AAX file to be converted (required) 
