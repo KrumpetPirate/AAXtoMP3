@@ -39,17 +39,8 @@ perl AAXtoMP3.pl -a AUTHCODE -i AAXFILE -v -c
 * -a: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * -i: the input AAX file to be converted (required) 
 * -v: verbose (optional)
-* -c: Convert to chapters based on input file's metadata information
 
-## Known issues
-Currently the chapters mode (activated by the -c flag) does not work correctly.
-Parsing the metadata works fine but when the timestamps are converted to
-HH:MM:SS.xxx format there is some sort of hickup. It could be that Audible has some
-delay in the file to prevent this, but starting from Chapter 2 of the book it will
-no longer sync. I don't know if I will ever fix this, so avoid using the -c flag for now
-to produce one large MP3 file for the audiobook.
-
-Also this was tested on Linux with the above requirements. No effort will be made to
+Tested on Linux with the above requirements. No effort will be made to
 port this work to any other operating system, though it may work fine. Want a Windows/
 OSX port? You'll have to fork the work.
 
