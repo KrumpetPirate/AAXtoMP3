@@ -33,5 +33,10 @@ while [ $# -gt 0 ]; do
     echo "Done creating chapters. Single file and chaptered files contained in ${OUTPUT_DIR}."
 
     rm tmp.txt
+
+    echo "Extracting cover into ${OUTPUT_DIR}/cover.jpg..."
+    ffmpeg -v error -activation_bytes $AUTHCODE -i "$FILE" -an -vcodec copy "${OUTPUT_DIR}/cover.jpg"
+    echo "Done."
+
     shift
 done
