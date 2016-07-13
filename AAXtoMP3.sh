@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 AUTHCODE=$1
 shift
 while [ $# -gt 0 ]; do
