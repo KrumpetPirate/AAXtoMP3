@@ -6,8 +6,8 @@ while [ $# -gt 0 ]; do
     echo "Decoding $FILE with AUTHCODE $AUTHCODE..."
 
     ffmpeg -i "$FILE" 2> tmp.txt
-    TITLE=`grep -a -m1 -h -r "title" tmp.txt | head -1 | cut -d: -f2- | xargs`
-    TITLE=`echo $TITLE | sed -e 's/(Unabridged)//' | xargs`
+    TITLE=`grep -a -m1 -h -r "title" tmp.txt | head -1 | cut -d: -f2- | xargs -0`
+    TITLE=`echo $TITLE | sed -e 's/(Unabridged)//' | xargs -0`
     ARTIST=`grep -a -m1 -h -r "artist" tmp.txt | head -1 | cut -d: -f2- | xargs`
     GENRE=`grep -a -m1 -h -r "genre" tmp.txt | head -1 | cut -d: -f2- | xargs`
     BITRATE=`grep -a -m1 -h -r "bitrate" tmp.txt | head -1 | rev | cut -d: -f 1 | rev | egrep -o [0-9]+ | xargs`
