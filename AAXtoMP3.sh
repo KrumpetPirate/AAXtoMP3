@@ -12,7 +12,7 @@ while [ $# -gt 0 ]; do
     GENRE=`grep -a -m1 -h -r "genre" tmp.txt | head -1 | cut -d: -f2- | xargs`
     BITRATE=`grep -a -m1 -h -r "bitrate" tmp.txt | head -1 | rev | cut -d: -f 1 | rev | egrep -o [0-9]+ | xargs`
     BITRATE="${BITRATE}k"
-    OUTPUT="$TITLE"
+    OUTPUT=`echo $TITLE | sed -e 's/\:/-/g' | xargs -0`
     OUTPUT_DIR="${GENRE}/${ARTIST}/${TITLE}"
 
     ffmpeg -v error -stats -activation_bytes $AUTHCODE -i "${FILE}" -vn -c:a libmp3lame -ab $BITRATE "${OUTPUT}.mp3"
