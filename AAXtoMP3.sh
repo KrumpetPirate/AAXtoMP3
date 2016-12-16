@@ -7,6 +7,8 @@ if ! command -v ffmpeg 2> /dev/null ; then
     exit 1
 fi
 
+trap 'rm -f "tmp.txt"' EXIT TERM
+
 while [ $# -gt 0 ]; do
     FILE="$1"
     echo "$(date "+%F %T%z") Decoding ${FILE} with AUTHCODE ${AUTHCODE}..."
@@ -30,8 +32,8 @@ while [ $# -gt 0 ]; do
     set -x
     while read -r first _ _ start _ end; do
         if [[ "${first}" = "Chapter" ]]; then
-            read
-            read _ _ chapter
+            read -r
+            read -r _ _ chapter
             ffmpeg -v error -stats -i "${OUTPUT}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${OUTPUT} - ${chapter}.mp3" < /dev/null
             mv "${OUTPUT} - ${chapter}.mp3" "${OUTPUT_DIR}"
             set +x
