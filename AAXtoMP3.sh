@@ -7,7 +7,7 @@ if ! command -v ffmpeg 2> /dev/null ; then
     exit 1
 fi
 
-trap 'rm -f "tmp.txt"' EXIT TERM
+trap 'rm -f "tmp.txt" ; exit 0 ;' EXIT TERM INT
 
 while [ $# -gt 0 ]; do
     FILE="$1"
