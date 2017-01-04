@@ -6,14 +6,16 @@ debug() {
     echo "$(date "+%F %T%z") ${1}"
 }
 
-if ! command -v ffmpeg 2> /dev/null ; then
-    date "+%F %Tz ABORT: ffmpeg is missing"
+if ! command -v ffmpeg 2> /dev/null
+then
+    debug "ABORT: ffmpeg is missing"
     exit 1
 fi
 
-trap 'rm -f "tmp.txt" ; exit 0 ;' EXIT TERM INT
+trap 'rm -f "tmp.txt"' EXIT TERM INT
 
-while [ $# -gt 0 ]; do
+while [ $# -gt 0 ]
+do
     path="$1"
     debug "Decoding ${path} with AUTHCODE ${auth_code}..."
 
@@ -34,8 +36,10 @@ while [ $# -gt 0 ]; do
     debug "Extracting chaptered mp3 files from ${output}.mp3..."
     mkdir -p "${output_directory}"
     set -x
-    while read -r first _ _ start _ end; do
-        if [[ "${first}" = "Chapter" ]]; then
+    while read -r first _ _ start _ end
+    do
+        if [[ "${first}" = "Chapter" ]]
+        then
             read -r
             read -r _ _ chapter
             ffmpeg -v error -stats -i "${output}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${output} - ${chapter}.mp3" < /dev/null
