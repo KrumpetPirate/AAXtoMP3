@@ -14,9 +14,8 @@ fi
 
 trap 'rm -f "tmp.txt"' EXIT TERM INT
 
-while [ $# -gt 0 ]
+for path
 do
-    path="$1"
     debug "Decoding ${path} with AUTHCODE ${auth_code}..."
 
     ffmpeg -i "${path}" 2> tmp.txt
