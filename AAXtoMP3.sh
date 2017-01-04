@@ -2,6 +2,10 @@
 auth_code=$1
 shift
 
+debug() {
+    echo "$(date "+%F %T%z") ${1}"
+}
+
 if ! command -v ffmpeg 2> /dev/null ; then
     date "+%F %Tz ABORT: ffmpeg is missing"
     exit 1
@@ -11,7 +15,7 @@ trap 'rm -f "tmp.txt" ; exit 0 ;' EXIT TERM INT
 
 while [ $# -gt 0 ]; do
     path="$1"
-    echo "$(date "+%F %T%z") Decoding ${path} with AUTHCODE ${auth_code}..."
+    debug "Decoding ${path} with AUTHCODE ${auth_code}..."
 
     ffmpeg -i "${path}" 2> tmp.txt
     title=$(grep -a -m1 -h -r "title" tmp.txt | head -1 | cut -d: -f2- | xargs echo )
@@ -25,9 +29,9 @@ while [ $# -gt 0 ]; do
 
     ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "${bitrate}" "${output}.mp3"
 
-    echo "$(date "+%F %T%z") Created ${output}.mp3."
+    debug "Created ${output}.mp3."
 
-    echo "$(date "+%F %T%z") Extracting chaptered mp3 files from ${output}.mp3..."
+    debug "Extracting chaptered mp3 files from ${output}.mp3..."
     mkdir -p "${output_directory}"
     set -x
     while read -r first _ _ start _ end; do
@@ -40,13 +44,13 @@ while [ $# -gt 0 ]; do
         fi
     done < tmp.txt
     mv "${output}.mp3" "${output_directory}"
-    echo "$(date "+%F %T%z") Done creating chapters. Single file and chaptered files contained in ${output_directory}."
+    debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
     rm tmp.txt
 
-    echo "$(date "+%F %T%z") Extracting cover into ${output_directory}/cover.jpg..."
+    debug "Extracting cover into ${output_directory}/cover.jpg..."
     ffmpeg -v error -activation_bytes "${auth_code}" -i "${path}" -an -vcodec copy "${output_directory}/cover.jpg"
-    echo "$(date "+%F %T%z") Done."
+    debug "Done."
 
     shift
 done
