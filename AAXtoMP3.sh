@@ -67,4 +67,5 @@ do
     debug "Extracting cover into ${cover_path}..."
     ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
     debug "Done."
+    rm "${metadata_file}"
 done
