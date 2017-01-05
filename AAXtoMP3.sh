@@ -37,7 +37,7 @@ do
     title=$(get_metadata_value title)
     output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
 
-    ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "$(get_bitrate)k" "${title}.mp3"
+    ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a libmp3lame -ab "$(get_bitrate)k" "${title}.mp3"
 
     debug "Created ${title}.mp3."
 
@@ -50,7 +50,7 @@ do
         then
             read -r
             read -r _ _ chapter
-            ffmpeg -v error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${title} - ${chapter}.mp3" < /dev/null
+            ffmpeg -loglevel error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -codec:a copy "${title} - ${chapter}.mp3" < /dev/null
             mv "${title} - ${chapter}.mp3" "${output_directory}"
             set +x
         fi
@@ -59,7 +59,7 @@ do
     debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
     debug "Extracting cover into ${output_directory}/cover.jpg..."
-    ffmpeg -v error -activation_bytes "${auth_code}" -i "${path}" -an -vcodec copy "${output_directory}/cover.jpg"
+    ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${output_directory}/cover.jpg"
     debug "Done."
 
     shift
