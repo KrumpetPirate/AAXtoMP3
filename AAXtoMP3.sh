@@ -63,6 +63,4 @@ do
     debug "Extracting cover into ${output_directory}/cover.jpg..."
     ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${output_directory}/cover.jpg"
     debug "Done."
-
-    shift
 done
