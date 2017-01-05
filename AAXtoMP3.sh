@@ -47,16 +47,16 @@ do
     debug "Extracting chaptered mp3 files from ${title}.mp3..."
     mkdir -p "${output_directory}"
 
-    while read -r first _ _ start _ end
+    while read -r -u9 first _ _ start _ end
     do
         if [[ "${first}" = "Chapter" ]]
         then
-            read -r _
-            read -r _ _ chapter
-            ffmpeg -loglevel error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -codec:a copy "${title} - ${chapter}.mp3" < /dev/null
+            read -r -u9 _
+            read -r -u9 _ _ chapter
+            ffmpeg -loglevel error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -codec:a copy "${title} - ${chapter}.mp3"
             mv "${title} - ${chapter}.mp3" "${output_directory}"
         fi
-    done < "$metadata_file"
+    done 9< "$metadata_file"
     mv "${title}.mp3" "${output_directory}"
     debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
