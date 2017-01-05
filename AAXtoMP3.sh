@@ -1,52 +1,78 @@
 #!/usr/bin/env bash
-AUTHCODE=$1
-shift
 
-if ! command -v ffmpeg 2> /dev/null ; then
-    date "+%F %Tz ABORT: ffmpeg is missing"
-    exit 1
+set -o errexit -o noclobber -o nounset -o pipefail
+
+codec=libmp3lame
+extension=mp3
+
+if [[ "$1" = '--flac' ]]
+then
+    codec=flac
+    extension=flac
+    shift
 fi
 
-trap 'rm -f "tmp.txt" ; exit 0 ;' EXIT TERM INT
+auth_code=$1
+shift
 
-while [ $# -gt 0 ]; do
-    FILE="$1"
-    echo "$(date "+%F %T%z") Decoding ${FILE} with AUTHCODE ${AUTHCODE}..."
+debug() {
+    echo "$(date "+%F %T%z") ${1}"
+}
 
-    ffmpeg -i "${FILE}" 2> tmp.txt
-    TITLE=$(grep -a -m1 -h -r "title" tmp.txt | head -1 | cut -d: -f2- | xargs echo )
-    TITLE=$(echo "${TITLE}" | sed -e 's/ (Unabridged)//' | xargs echo )
-    ARTIST=$(grep -a -m1 -h -r "artist" tmp.txt | head -1 | cut -d: -f2- | xargs echo )
-    GENRE=$(grep -a -m1 -h -r "genre" tmp.txt | head -1 | cut -d: -f2- | xargs echo )
-    BITRATE=$(grep -a -m1 -h -r "bitrate" tmp.txt | head -1 | rev | cut -d: -f 1 | rev | egrep -o [0-9]+ | xargs echo )
-    BITRATE="${BITRATE}k"
-    OUTPUT=$(echo "${TITLE}" | sed -e 's/\:/-/g' | xargs echo )
-    OUTPUT_DIR="${GENRE}/${ARTIST}/${TITLE}"
+trap 'rm --recursive --force "${working_directory}"' EXIT
+working_directory="$(mktemp --directory)"
+metadata_file="${working_directory}/metadata.txt"
 
-    ffmpeg -v error -stats -activation_bytes "${AUTHCODE}" -i "${FILE}" -vn -c:a libmp3lame -ab "${BITRATE}" "${OUTPUT}.mp3"
+save_metadata() {
+    local media_file
+    media_file="$1"
+    ffprobe -i "$media_file" 2> "$metadata_file"
+}
 
-    echo "$(date "+%F %T%z") Created ${OUTPUT}.mp3."
+get_metadata_value() {
+    local key
+    key="$1"
+    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+}
 
-    echo "$(date "+%F %T%z") Extracting chaptered mp3 files from ${OUTPUT}.mp3..."
-    mkdir -p "${OUTPUT_DIR}"
-    set -x
-    while read -r first _ _ start _ end; do
-        if [[ "${first}" = "Chapter" ]]; then
-            read -r
-            read -r _ _ chapter
-            ffmpeg -v error -stats -i "${OUTPUT}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${OUTPUT} - ${chapter}.mp3" < /dev/null
-            mv "${OUTPUT} - ${chapter}.mp3" "${OUTPUT_DIR}"
-            set +x
+get_bitrate() {
+    get_metadata_value bitrate | grep --only-matching '[0-9]\+'
+}
+
+normalize_whitespace() {
+    echo $*
+}
+
+for path
+do
+    debug "Decoding ${path} with auth code ${auth_code}..."
+
+    save_metadata "${path}"
+    title=$(get_metadata_value title)
+    output_directory="$(dirname "${path}")/$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
+    mkdir -p "${output_directory}"
+    full_file_path="${output_directory}/${title}.${extension}"
+    ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" "${full_file_path}"
+
+    debug "Created ${full_file_path}."
+
+    debug "Extracting chapter files from ${full_file_path}..."
+
+    while read -r -u9 first _ _ start _ end
+    do
+        if [[ "${first}" = "Chapter" ]]
+        then
+            read -r -u9 _
+            read -r -u9 _ _ chapter
+            chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
+            ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
         fi
-    done < tmp.txt
-    mv "${OUTPUT}.mp3" "${OUTPUT_DIR}"
-    echo "$(date "+%F %T%z") Done creating chapters. Single file and chaptered files contained in ${OUTPUT_DIR}."
+    done 9< "$metadata_file"
+    debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
-    rm tmp.txt
-
-    echo "$(date "+%F %T%z") Extracting cover into ${OUTPUT_DIR}/cover.jpg..."
-    ffmpeg -v error -activation_bytes "${AUTHCODE}" -i "${FILE}" -an -vcodec copy "${OUTPUT_DIR}/cover.jpg"
-    echo "$(date "+%F %T%z") Done."
-
-    shift
+    cover_path="${output_directory}/cover.jpg"
+    debug "Extracting cover into ${cover_path}..."
+    ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
+    debug "Done."
+    rm "${metadata_file}"
 done
