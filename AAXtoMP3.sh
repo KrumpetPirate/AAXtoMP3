@@ -14,10 +14,13 @@ working_directory="$(mktemp --directory)"
 metadata_file="${working_directory}/metadata.txt"
 
 save_metadata() {
-    ffprobe -i "$1" 2> "$metadata_file"
+    local media_file
+    media_file="$1"
+    ffprobe -i "$media_file" 2> "$metadata_file"
 }
 
 get_metadata_value() {
+    local key
     key="$1"
     grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | xargs -0
 }
