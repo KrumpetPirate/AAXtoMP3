@@ -40,13 +40,13 @@ do
     save_metadata "${path}"
     title=$(get_metadata_value title)
     output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
-    full_file_path="${title}.mp3"
+    mkdir -p "${output_directory}"
+    full_file_path="${output_directory}/${title}.mp3"
     ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a libmp3lame -ab "$(get_bitrate)k" "${full_file_path}"
 
     debug "Created ${title}.mp3."
 
     debug "Extracting chaptered mp3 files from ${title}.mp3..."
-    mkdir -p "${output_directory}"
 
     while read -r -u9 first _ _ start _ end
     do
@@ -54,12 +54,10 @@ do
         then
             read -r -u9 _
             read -r -u9 _ _ chapter
-            chapter_file="${title} - ${chapter}.mp3"
+            chapter_file="${output_directory}/${title} - ${chapter}.mp3"
             ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
-            mv "${chapter_file}" "${output_directory}"
         fi
     done 9< "$metadata_file"
-    mv "${full_file_path}" "${output_directory}"
     debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
     cover_path="${output_directory}/cover.jpg"
