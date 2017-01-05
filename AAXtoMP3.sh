@@ -16,21 +16,29 @@ trap 'rm --recursive --force "${working_directory}"' EXIT
 working_directory="$(mktemp --directory)"
 metadata_file="${working_directory}/metadata.txt"
 
+save_metadata() {
+    ffmpeg -i "${path}" 2> "$metadata_file"
+}
+
+get_metadata_value() {
+    key="$1"
+    grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | xargs
+}
+
+get_bitrate() {
+    get_metadata_value bitrate | grep --only-matching '[0-9]\+'
+}
+
 for path
 do
     debug "Decoding ${path} with AUTHCODE ${auth_code}..."
 
-    ffmpeg -i "${path}" 2> "$metadata_file"
-    title=$(grep -a -m1 -h -r "title" "$metadata_file" | head -1 | cut -d: -f2- | xargs echo )
-    title=$(echo "${title}" | sed -e 's/ (Unabridged)//' | xargs echo )
-    artist=$(grep -a -m1 -h -r "artist" "$metadata_file" | head -1 | cut -d: -f2- | xargs echo )
-    genre=$(grep -a -m1 -h -r "genre" "$metadata_file" | head -1 | cut -d: -f2- | xargs echo )
-    bitrate=$(grep -a -m1 -h -r "bitrate" "$metadata_file" | head -1 | rev | cut -d: -f 1 | rev | egrep -o [0-9]+ | xargs echo )
-    bitrate="${bitrate}k"
+    save_metadata
+    title=$(get_metadata_value title)
     output=$(echo "${title}" | sed -e 's/\:/-/g' | xargs echo )
-    output_directory="${genre}/${artist}/${title}"
+    output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
 
-    ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "${bitrate}" "${output}.mp3"
+    ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "$(get_bitrate)k" "${output}.mp3"
 
     debug "Created ${output}.mp3."
 
