@@ -43,7 +43,7 @@ do
 
     debug "Extracting chaptered mp3 files from ${title}.mp3..."
     mkdir -p "${output_directory}"
-    set -x
+
     while read -r first _ _ start _ end
     do
         if [[ "${first}" = "Chapter" ]]
@@ -52,7 +52,6 @@ do
             read -r _ _ chapter
             ffmpeg -loglevel error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -codec:a copy "${title} - ${chapter}.mp3" < /dev/null
             mv "${title} - ${chapter}.mp3" "${output_directory}"
-            set +x
         fi
     done < "$metadata_file"
     mv "${title}.mp3" "${output_directory}"
