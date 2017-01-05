@@ -22,11 +22,15 @@ save_metadata() {
 get_metadata_value() {
     local key
     key="$1"
-    grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | xargs -0
+    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
 }
 
 get_bitrate() {
     get_metadata_value bitrate | grep --only-matching '[0-9]\+'
+}
+
+normalize_whitespace() {
+    echo $*
 }
 
 for path
