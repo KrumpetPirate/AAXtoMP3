@@ -5,8 +5,8 @@ set -o errexit -o noclobber -o nounset -o pipefail
 auth_code=$1
 shift
 
-codec=libmp3lame
-extension=mp3
+codec=flac
+extension=flac
 
 debug() {
     echo "$(date "+%F %T%z") ${1}"
