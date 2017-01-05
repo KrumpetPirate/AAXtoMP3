@@ -17,7 +17,7 @@ working_directory="$(mktemp --directory)"
 metadata_file="${working_directory}/metadata.txt"
 
 save_metadata() {
-    ffmpeg -i "${path}" 2> "$metadata_file"
+    ffprobe -i "${path}" 2> "$metadata_file"
 }
 
 get_metadata_value() {
