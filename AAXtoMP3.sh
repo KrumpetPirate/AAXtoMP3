@@ -42,7 +42,7 @@ do
 
     save_metadata "${path}"
     title=$(get_metadata_value title)
-    output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
+    output_directory="$(dirname "${path}")/$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
     ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" "${full_file_path}"
