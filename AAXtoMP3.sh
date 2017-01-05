@@ -2,11 +2,18 @@
 
 set -o errexit -o noclobber -o nounset -o pipefail
 
+codec=libmp3lame
+extension=mp3
+
+if [[ "$1" = '--flac' ]]
+then
+    codec=flac
+    extension=flac
+    shift
+fi
+
 auth_code=$1
 shift
-
-codec=flac
-extension=flac
 
 debug() {
     echo "$(date "+%F %T%z") ${1}"
