@@ -35,14 +35,13 @@ do
 
     save_metadata
     title=$(get_metadata_value title)
-    output=$(echo "${title}" | sed -e 's/\:/-/g' | xargs echo )
     output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
 
-    ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "$(get_bitrate)k" "${output}.mp3"
+    ffmpeg -v error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -c:a libmp3lame -ab "$(get_bitrate)k" "${title}.mp3"
 
-    debug "Created ${output}.mp3."
+    debug "Created ${title}.mp3."
 
-    debug "Extracting chaptered mp3 files from ${output}.mp3..."
+    debug "Extracting chaptered mp3 files from ${title}.mp3..."
     mkdir -p "${output_directory}"
     set -x
     while read -r first _ _ start _ end
@@ -51,12 +50,12 @@ do
         then
             read -r
             read -r _ _ chapter
-            ffmpeg -v error -stats -i "${output}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${output} - ${chapter}.mp3" < /dev/null
-            mv "${output} - ${chapter}.mp3" "${output_directory}"
+            ffmpeg -v error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -acodec copy "${title} - ${chapter}.mp3" < /dev/null
+            mv "${title} - ${chapter}.mp3" "${output_directory}"
             set +x
         fi
     done < "$metadata_file"
-    mv "${output}.mp3" "${output_directory}"
+    mv "${title}.mp3" "${output_directory}"
     debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
 
     debug "Extracting cover into ${output_directory}/cover.jpg..."
