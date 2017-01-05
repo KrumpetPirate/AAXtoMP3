@@ -20,7 +20,7 @@ working_directory="$(mktemp --directory)"
 metadata_file="${working_directory}/metadata.txt"
 
 save_metadata() {
-    ffprobe -i "${path}" 2> "$metadata_file"
+    ffprobe -i "$1" 2> "$metadata_file"
 }
 
 get_metadata_value() {
@@ -36,7 +36,7 @@ for path
 do
     debug "Decoding ${path} with AUTHCODE ${auth_code}..."
 
-    save_metadata
+    save_metadata "${path}"
     title=$(get_metadata_value title)
     output_directory="$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
 
