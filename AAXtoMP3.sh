@@ -48,7 +48,7 @@ do
     do
         if [[ "${first}" = "Chapter" ]]
         then
-            read -r
+            read -r _
             read -r _ _ chapter
             ffmpeg -loglevel error -stats -i "${title}.mp3" -ss "${start%?}" -to "${end}" -codec:a copy "${title} - ${chapter}.mp3" < /dev/null
             mv "${title} - ${chapter}.mp3" "${output_directory}"
