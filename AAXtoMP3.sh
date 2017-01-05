@@ -9,12 +9,6 @@ debug() {
     echo "$(date "+%F %T%z") ${1}"
 }
 
-if ! command -v ffmpeg 2> /dev/null
-then
-    debug "ABORT: ffmpeg is missing"
-    exit 1
-fi
-
 trap 'rm --recursive --force "${working_directory}"' EXIT
 working_directory="$(mktemp --directory)"
 metadata_file="${working_directory}/metadata.txt"
