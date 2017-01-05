@@ -22,7 +22,7 @@ save_metadata() {
 
 get_metadata_value() {
     key="$1"
-    grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | xargs
+    grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | xargs -0
 }
 
 get_bitrate() {
