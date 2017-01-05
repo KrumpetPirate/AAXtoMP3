@@ -35,7 +35,7 @@ normalize_whitespace() {
 
 for path
 do
-    debug "Decoding ${path} with AUTHCODE ${auth_code}..."
+    debug "Decoding ${path} with auth code ${auth_code}..."
 
     save_metadata "${path}"
     title=$(get_metadata_value title)
@@ -44,9 +44,9 @@ do
     full_file_path="${output_directory}/${title}.mp3"
     ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a libmp3lame -ab "$(get_bitrate)k" "${full_file_path}"
 
-    debug "Created ${title}.mp3."
+    debug "Created ${full_file_path}."
 
-    debug "Extracting chaptered mp3 files from ${title}.mp3..."
+    debug "Extracting chapter files from ${full_file_path}..."
 
     while read -r -u9 first _ _ start _ end
     do
