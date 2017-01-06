@@ -31,15 +31,20 @@ bash AAXtoMP3.sh <AUTHCODE> {INPUT_FILES}
 * AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * Everything else is considered an input file, useful for batching!
 
-You can also convert the output to FLAC encoding instead of MP3 by doing the following *in order*
+You can also convert the output to FLAC encoding instead of MP3 by doing the following *in order*:
 ```
 bash AAXtoMP3.sh --flac <AUTHCODE> {INPUT_FILES}
 ```
+Note that FLAC encoding is typically a little faster, at the cost of compatibility with some players.
+
+If you wish to convert to a single file you can add --single to the input. This will prevent chaptered content from being extracted.
+
 Additionally, if you have a .authcode file available in the current working directory, it will read the first line of
-that line and treat it like your auth_code. For example here is the full usage with a
-.authcode file available:
+that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
+
+Here is the full usage (NOTE: Order matters!)
 ```
-bash AAXtoMP3.sh [--flac] [--single] {FILES}
+bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}
 ```
 
 ## Anti-Piracy Notice
