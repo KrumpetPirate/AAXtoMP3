@@ -4,6 +4,12 @@ set -o errexit -o noclobber -o nounset -o pipefail
 
 codec=libmp3lame
 extension=mp3
+mode=chaptered
+
+if [ "$#" -eq 0 ]; then
+        echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
+        exit 1
+fi
 
 if [[ "$1" = '--flac' ]]
 then
@@ -12,8 +18,18 @@ then
     shift
 fi
 
-auth_code=$1
-shift
+if [[ "$1" == '--single' ]]
+then
+    mode=single
+    shift
+fi
+
+if [ ! -f .authcode ]; then
+    auth_code=$1
+    shift
+else
+    auth_code=`head -1 .authcode`
+fi
 
 debug() {
     echo "$(date "+%F %T%z") ${1}"
@@ -56,19 +72,22 @@ do
 
     debug "Created ${full_file_path}."
 
-    debug "Extracting chapter files from ${full_file_path}..."
+    if [ "${mode}" == "chaptered" ]; then
+        debug "Extracting chapter files from ${full_file_path}..."
 
-    while read -r -u9 first _ _ start _ end
-    do
-        if [[ "${first}" = "Chapter" ]]
-        then
-            read -r -u9 _
-            read -r -u9 _ _ chapter
-            chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
-            ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
-        fi
-    done 9< "$metadata_file"
-    debug "Done creating chapters. Single file and chaptered files contained in ${output_directory}."
+        while read -r -u9 first _ _ start _ end
+        do
+            if [[ "${first}" = "Chapter" ]]
+            then
+                read -r -u9 _
+                read -r -u9 _ _ chapter
+                chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
+                ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
+            fi
+        done 9< "$metadata_file"
+        rm ${full_file_path}
+        debug "Done creating chapters. Chaptered files contained in ${output_directory}."
+    fi
 
     cover_path="${output_directory}/cover.jpg"
     debug "Extracting cover into ${cover_path}..."
