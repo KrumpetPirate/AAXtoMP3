@@ -85,7 +85,7 @@ do
                 ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
             fi
         done 9< "$metadata_file"
-        rm ${full_file_path}
+        rm "${full_file_path}"
         debug "Done creating chapters. Chaptered files contained in ${output_directory}."
     fi
 
