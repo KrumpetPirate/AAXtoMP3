@@ -35,8 +35,8 @@ debug() {
     echo "$(date "+%F %T%z") ${1}"
 }
 
-trap 'rm --recursive --force "${working_directory}"' EXIT
-working_directory="$(mktemp --directory)"
+trap 'rm -r -f "${working_directory}"' EXIT
+working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
 save_metadata() {
@@ -48,7 +48,7 @@ save_metadata() {
 get_metadata_value() {
     local key
     key="$1"
-    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut --delimiter=: --fields=2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
 }
 
 get_bitrate() {
