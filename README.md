@@ -24,6 +24,10 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 * ffmpeg version 2.8.3 or later
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
 
+## OSX
+Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
+conversions in OSX.
+
 ## Usage
 ```
 bash AAXtoMP3.sh <AUTHCODE> {INPUT_FILES}
