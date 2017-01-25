@@ -64,11 +64,14 @@ do
     debug "Decoding ${path} with auth code ${auth_code}..."
 
     save_metadata "${path}"
+    genre=$(get_metadata_value genre)
+    artist=$(get_metadata_value artist)
     title=$(get_metadata_value title)
-    output_directory="$(dirname "${path}")/$(get_metadata_value genre)/$(get_metadata_value artist)/${title}"
+    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
-    ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" "${full_file_path}"
+
+    ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
 
     debug "Created ${full_file_path}."
 
@@ -82,7 +85,7 @@ do
                 read -r -u9 _
                 read -r -u9 _ _ chapter
                 chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
-                ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy "${chapter_file}"
+                ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy -metadata track="${chapter}" "${chapter_file}"
             fi
         done 9< "$metadata_file"
         rm "${full_file_path}"
