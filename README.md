@@ -15,7 +15,7 @@ Audible fails for some reason.
 TODO: Automatically fix the MP3 tags on the generated audio files. For now I use easytag which seems to work okay.
 
 ## Setup
-You will need your four byte authitication code that comes from Audible's
+You will need your four byte authentication code that comes from Audible's
 servers. This will be used by ffmpeg to perform the initial audio convert. You
 can obtain this string from a tool like [audible-activator](https://github.com/inAudible-NG/audible-activator).
 
@@ -57,7 +57,7 @@ use their own encryption key (fetched from Audible servers) to decrypt the
 audiobook in the same manner that the official audiobook playing software does.
 
 Please only use this application for gaining full access to your own audiobooks
-for archiving/converson/convenience. DeDRMed audiobooks should not be uploaded
+for archiving/conversion/convenience. DeDRMed audiobooks should not be uploaded
 to open servers, torrents, or other methods of mass distribution. No help will
 be given to people doing such things. Authors, retailers, and publishers all
 need to make a living, so that they can continue to produce audiobooks for us to
