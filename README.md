@@ -12,8 +12,6 @@ your **personal** Audible account. The purpose of this software is to
 create a method for you to download and store your books just in case
 Audible fails for some reason.
 
-TODO: Automatically fix the MP3 tags on the generated audio files. For now I use easytag which seems to work okay.
-
 ## Setup
 You will need your four byte authentication code that comes from Audible's
 servers. This will be used by ffmpeg to perform the initial audio convert. You
@@ -27,6 +25,9 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 ## OSX
 Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
 conversions in OSX.
+
+## AUR
+Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.archlinux.org/packages/aaxtomp3-git/). Note that you will still need to extract your activation bytes before use.
 
 ## Usage
 ```
