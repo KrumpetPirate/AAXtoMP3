@@ -63,7 +63,7 @@ for path
 do
     debug "Decoding ${path} with auth code ${auth_code}..."
 
-    save_metadata "${path}"
+    save_metadata="${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
     title=$(get_metadata_value title)
