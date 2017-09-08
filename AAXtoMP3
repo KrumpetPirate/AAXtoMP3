@@ -59,6 +59,18 @@ normalize_whitespace() {
     echo $*
 }
 
+chapter_padding() {
+    chaptercount=$(grep -Pc "title\s+:\sChapter\s\d+" $metadata_file)
+    if [[ $chaptercount -gt 9 && $chaptercount -lt 100 ]]
+    then
+            chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 0\1/' <<<$chapter)
+    elif [[ $chaptercount -gt 99 && $chaptercount -lt 999 ]]
+    then
+            chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 00\1/' <<<$chapter)
+            chapter=$(sed -e 's/Chapter \([[:digit:]]\{2\}\)$/Chapter 0\1/' <<<$chapter)
+    fi
+}
+
 for path
 do
     debug "Decoding ${path} with auth code ${auth_code}..."
@@ -84,6 +96,7 @@ do
             then
                 read -r -u9 _
                 read -r -u9 _ _ chapter
+                chapter_padding
                 chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy -metadata track="${chapter}" "${chapter_file}"
             fi
