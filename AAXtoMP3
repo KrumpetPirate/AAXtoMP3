@@ -48,7 +48,7 @@ save_metadata() {
 get_metadata_value() {
     local key
     key="$1"
-    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2-5 | sed -e 's#/##g;s/ (Unabridged)//' | sed -e 's/:/, /' | sed -e 's/:/, /g' | tr -s '[:blank:]' ' ')"
 }
 
 get_bitrate() {
