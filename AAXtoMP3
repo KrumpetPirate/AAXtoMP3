@@ -2,6 +2,19 @@
 
 set -o errexit -o noclobber -o nounset -o pipefail
 
+
+# Check for GNU grep
+grep_version=$(grep -V)
+
+if [[ ! "$grep_version" =~ "GNU" ]] 
+	then
+		echo "This script requires GNU grep"
+		echo "exiting"
+		exit 1
+fi
+
+echo "starting"
+
 codec=libmp3lame
 extension=mp3
 mode=chaptered
@@ -36,6 +49,7 @@ debug() {
 }
 
 trap 'rm -r -f "${working_directory}"' EXIT
+
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
@@ -48,7 +62,7 @@ save_metadata() {
 get_metadata_value() {
     local key
     key="$1"
-    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')" || echo "failed normalizing"
 }
 
 get_bitrate() {
