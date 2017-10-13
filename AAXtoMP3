@@ -5,7 +5,14 @@ set -o errexit -o noclobber -o nounset -o pipefail
 codec=libmp3lame
 extension=mp3
 mode=chaptered
-grep=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+
+if ! [[ $(type -P "$GREP") ]]; then
+    echo "$GREP (GNU grep) is not in your PATH"
+    echo "Without it, this script will break."
+    echo "On macOS, you may want to try: brew install grep"
+    exit 1
+fi
 
 if [ "$#" -eq 0 ]; then
         echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
@@ -49,11 +56,11 @@ save_metadata() {
 get_metadata_value() {
     local key
     key="$1"
-    normalize_whitespace "$(grep --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2 | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+    normalize_whitespace "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
 }
 
 get_bitrate() {
-    get_metadata_value bitrate | grep --only-matching '[0-9]\+'
+    get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
 }
 
 normalize_whitespace() {
@@ -61,7 +68,7 @@ normalize_whitespace() {
 }
 
 chapter_padding() {
-    chaptercount=$(grep -Pc "title\s+:\sChapter\s\d+" $metadata_file)
+    chaptercount=$($GREP -Pc "title\s+:\sChapter\s\d+" $metadata_file)
     if [[ $chaptercount -gt 9 && $chaptercount -lt 100 ]]
     then
             chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 0\1/' <<<$chapter)

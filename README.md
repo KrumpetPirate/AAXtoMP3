@@ -24,7 +24,7 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 
 ## OSX
 Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
-conversions in OSX.
+conversions in OSX. It is recommended that you install GNU grep using 'brew install grep' for chapter padding to work.
 
 ## AUR
 Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.archlinux.org/packages/aaxtomp3-git/). Note that you will still need to extract your activation bytes before use.
