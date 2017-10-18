@@ -68,7 +68,7 @@ normalize_whitespace() {
 }
 
 chapter_padding() {
-    chaptercount=$($GREP -Pc "title\s+:\sChapter\s\d+" $metadata_file)
+    chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
     if [[ $chaptercount -gt 9 && $chaptercount -lt 100 ]]
     then
             chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 0\1/' <<<$chapter)
