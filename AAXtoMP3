@@ -67,18 +67,6 @@ normalize_whitespace() {
     echo $*
 }
 
-chapter_padding() {
-    chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-    if [[ $chaptercount -gt 9 && $chaptercount -lt 100 ]]
-    then
-            chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 0\1/' <<<$chapter)
-    elif [[ $chaptercount -gt 99 && $chaptercount -lt 999 ]]
-    then
-            chapter=$(sed -e 's/Chapter \([[:digit:]]\)$/Chapter 00\1/' <<<$chapter)
-            chapter=$(sed -e 's/Chapter \([[:digit:]]\{2\}\)$/Chapter 0\1/' <<<$chapter)
-    fi
-}
-
 for path
 do
     debug "Decoding ${path} with auth code ${auth_code}..."
@@ -96,17 +84,19 @@ do
     debug "Created ${full_file_path}."
 
     if [ "${mode}" == "chaptered" ]; then
-        debug "Extracting chapter files from ${full_file_path}..."
+        chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
+        debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
 
+        chapternum=1
         while read -r -u9 first _ _ start _ end
         do
             if [[ "${first}" = "Chapter" ]]
             then
                 read -r -u9 _
                 read -r -u9 _ _ chapter
-                chapter_padding
-                chapter_file="${output_directory}/${title} - ${chapter}.${extension}"
+                chapter_file="${output_directory}/${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}.${extension}"
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy -metadata track="${chapter}" "${chapter_file}"
+                chapternum=$((chapternum + 1 ))
             fi
         done 9< "$metadata_file"
         rm "${full_file_path}"
