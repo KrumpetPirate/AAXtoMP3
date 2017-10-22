@@ -98,9 +98,11 @@ do
             then
                 read -r -u9 _
                 read -r -u9 _ _ chapter
-                chapter_file="${output_directory}/${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}.${extension}"
+                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
+                chapter_file="${output_directory}/${chapter_title}.${extension}"
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
-                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapter}" "${chapter_file}"
+                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
+                    "${chapter_file}"
                 chapternum=$((chapternum + 1 ))
             fi
         done 9< "$metadata_file"
