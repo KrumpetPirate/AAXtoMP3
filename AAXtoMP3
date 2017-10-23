@@ -83,6 +83,10 @@ do
 
     debug "Created ${full_file_path}."
 
+    cover_path="${output_directory}/cover.jpg"
+    debug "Extracting cover into ${cover_path}..."
+    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
+
     if [ "${mode}" == "chaptered" ]; then
         chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
         debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
@@ -94,8 +98,11 @@ do
             then
                 read -r -u9 _
                 read -r -u9 _ _ chapter
-                chapter_file="${output_directory}/${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}.${extension}"
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -ss "${start%?}" -to "${end}" -codec:a copy -metadata track="${chapter}" "${chapter_file}"
+                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
+                chapter_file="${output_directory}/${chapter_title}.${extension}"
+                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
+                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
+                    "${chapter_file}"
                 chapternum=$((chapternum + 1 ))
             fi
         done 9< "$metadata_file"
@@ -103,9 +110,6 @@ do
         debug "Done creating chapters. Chaptered files contained in ${output_directory}."
     fi
 
-    cover_path="${output_directory}/cover.jpg"
-    debug "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
     debug "Done."
     rm "${metadata_file}"
 done
