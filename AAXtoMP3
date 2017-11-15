@@ -15,7 +15,7 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
+        echo "Usage: bash AAXtoMP3.sh [--flac] [--aac] [--single] AUTHCODE {FILES}"
         exit 1
 fi
 
@@ -23,6 +23,13 @@ if [[ "$1" = '--flac' ]]
 then
     codec=flac
     extension=flac
+    shift
+fi
+
+if [[ "$1" == '--aac' ]]
+then
+    codec=copy
+    extension=m4b
     shift
 fi
 
