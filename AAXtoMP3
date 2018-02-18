@@ -84,10 +84,15 @@ do
     debug "Created ${full_file_path}."
 
     cover_path="${output_directory}/cover.jpg"
+
     debug "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
+    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
 
     if [ "${mode}" == "chaptered" ]; then
+        playlist_file="${output_directory}/${title}.m3u"
+        debug "Creating PlayList ${title}.m3u"
+        echo '#EXTM3U' > "${playlist_file}"
+
         chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
         debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
 
@@ -103,6 +108,10 @@ do
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
+                
+                duration=$(echo "${end} - ${start%?}" | bc)
+                echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
+                echo "${chapter_title}.${extension}" >> "${playlist_file}"
                 chapternum=$((chapternum + 1 ))
             fi
         done 9< "$metadata_file"
