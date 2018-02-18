@@ -15,7 +15,8 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3.sh [--flac] [--aac] [--single] AUTHCODE {FILES}"
+        #echo "Usage: bash AXtoMP3.sh [--flac] [--aac] [--single] AUTHCODE {FILES}"
+        echo "Usage: bash AXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
         exit 1
 fi
 
@@ -26,12 +27,12 @@ then
     shift
 fi
 
-if [[ "$1" == '--aac' ]]
-then
-    codec=copy
-    extension=m4b
-    shift
-fi
+#if [[ "$1" == '--aac' ]]
+#then
+#    codec=copy
+#    extension=m4b
+#    shift
+#fi
 
 if [[ "$1" == '--single' ]]
 then
@@ -81,7 +82,7 @@ do
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title) | sed -e 's/\:/-/g' | xargs -0
+    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
     output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"

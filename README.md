@@ -31,7 +31,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage
 ```
-bash AAXtoMP3.sh [--flac] [--aac] [--single] AUTHCODE {FILES}
+bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}
 ```
 * AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * Everything else is considered an input file, useful for batching!
