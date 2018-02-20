@@ -36,8 +36,8 @@ bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>...
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
 
-* [AUTHCODE]: **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
-* <AAX INPUT_FILES> is considered an input file, useful for batching!
+* __[AUTHCODE]__ **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
+* __<AAX INPUT_FILES>__... are considered input file(s), useful for batching!
 
 
 ### MP3 Encoding
