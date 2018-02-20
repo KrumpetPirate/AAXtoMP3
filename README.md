@@ -53,9 +53,9 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ### Defaults
 * Specifying the AUTHCODE.
     In order of __precidence__.
-    1. [AUTHCODE] The command line option. With the highest precidence.
-    2. .authcode If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
-    3. ~/.aaxto_config a global config file for all the tools. And is used as the default if none of the above are specified.
+    1. **[AUTHCODE]** The command line option. With the highest precidence.
+    2. **.authcode** If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
+    3. **~/.aaxto_config** a global config file for all the tools. And is used as the default if none of the above are specified.
 Note: At least one of the above must be specified. The code must also match the encoding for the user that owns the AAX file(s).
 
 ## Anti-Piracy Notice
