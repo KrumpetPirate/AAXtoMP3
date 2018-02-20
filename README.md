@@ -41,9 +41,9 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 
 
 ### MP3 Encoding
-1. Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the --single option
-2. If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also be created in this instance.
-3. If you desire flac encoding. use the --flac option.  It's a bit faster but also a bit less compatible.
+* Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the **--single** option
+* If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also be created in this instance.
+* If you desire flac encoding. use the **--flac** option.  It's a bit faster but also a bit less compatible.
 
 ### M4A Encoding
 
