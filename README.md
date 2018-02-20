@@ -52,7 +52,7 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
 
 ### Defaults
 *Specifying the AUTHCODE.
-In order of precidence.
+    In order of precidence.
     [AUTHCODE]
     .authcode
     ~/.aaxto_config
