@@ -13,7 +13,7 @@ create a method for you to download and store your books just in case
 Audible fails for some reason.
 
 ## Setup
-You will need your four byte authentication code that comes from Audible's
+You will need your authentication code that comes from Audible's
 servers. This will be used by ffmpeg to perform the initial audio convert. You
 can obtain this string from a tool like [audible-activator](https://github.com/inAudible-NG/audible-activator).
 
@@ -31,13 +31,13 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [--flac] [--single] [AUTHCODE]* <AAX INPUT_FILES>
-bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>
-bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
+bash AAXtoMP3 [--flac] [--single] [AUTHCODE] <AAX INPUT_FILES>...
+bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>...
+bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
 
-* AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
-* Everything else is considered an input file, useful for batching!
+* [AUTHCODE]: **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
+* <AAX INPUT_FILES> is considered an input file, useful for batching!
 
 
 ### MP3 Encoding
@@ -51,7 +51,7 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
 ### M4B Encoding
 
 ### Defaults
-*Specifying the AUTHCODE.
+* Specifying the AUTHCODE.
     In order of precidence.
     1. [AUTHCODE]
     2. .authcode
