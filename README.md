@@ -31,29 +31,26 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [--flac] [--single] [AUTHCODE] <AAX INPUT_FILES>
+bash AAXtoMP3 [--flac] [--single] [AUTHCODE]* <AAX INPUT_FILES>
 bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
-
 ```
+
 * AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * Everything else is considered an input file, useful for batching!
 
-```
-MP3 Encoding
+
+### MP3 Encoding
     - Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the --single option
     - If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also
       be created in this instance.
     - If you desire flac encoding. use the --flac option.  It's a bit faster but also a bit less compatible.
 
-```
-M4A Encoding
+### M4A Encoding
 
-```
-M4B Encoding
+### M4B Encoding
 
-```
-Defaults
+### Defaults
     - If you have a .authcode file available in the current working directory, it will read the first line of
 that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
 
