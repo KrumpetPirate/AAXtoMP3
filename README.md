@@ -53,9 +53,9 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
 ### Defaults
 *Specifying the AUTHCODE.
     In order of precidence.
-    [AUTHCODE]
-    .authcode
-    ~/.aaxto_config
+    1. [AUTHCODE]
+    2. .authcode
+    3. ~/.aaxto_config
 
 ## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simply allows the user to
