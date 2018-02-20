@@ -1,8 +1,8 @@
-# AAXtoMP3
-The purpose of this software is to convert AAX files to a more common MP3 format
+# AAXtoMP3 AAXtoM4A AAxtoM4B
+The purpose of this software is to convert AAX files to common MP3, M4A and M4B formats
 through a basic bash script frontend to FFMPEG.
 
-Audible uses this file format to maintain DRM restrictions on their audio
+Audible uses this file format, AAX to maintain DRM restrictions on their audio
 books and if you download your book through your library it will be
 stored in this format.
 
@@ -29,28 +29,33 @@ conversions in OSX. It is recommended that you install GNU grep using 'brew inst
 ## AUR
 Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.archlinux.org/packages/aaxtomp3-git/). Note that you will still need to extract your activation bytes before use.
 
-## Usage
+## Usage(s)
 ```
-bash AAXtoMP3 <AUTHCODE> {INPUT_FILES}
+bash AAXtoMP3 [--flac] [--single] [AUTHCODE] <AAX INPUT_FILES>
+bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>
+bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
+
 ```
 * AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * Everything else is considered an input file, useful for batching!
 
-You can also convert the output to FLAC encoding instead of MP3 by doing the following *in order*:
 ```
-bash AAXtoMP3 --flac <AUTHCODE> {INPUT_FILES}
+MP3 Encoding
+    - Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the --single option
+    - If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also
+      be created in this instance.
+    - If you desire flac encoding. use the --flac option.  It's a bit faster but also a bit less compatible.
+
 ```
-Note that FLAC encoding is typically a little faster, at the cost of compatibility with some players.
+M4A Encoding
 
-If you wish to convert to a single file you can add --single to the input. This will prevent chaptered content from being extracted.
+```
+M4B Encoding
 
-Additionally, if you have a .authcode file available in the current working directory, it will read the first line of
+```
+Defaults
+    - If you have a .authcode file available in the current working directory, it will read the first line of
 that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
-
-Here is the full usage (NOTE: Order matters!)
-```
-bash AAXtoMP3 [--flac] [--single] AUTHCODE {FILES}
-```
 
 ## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simply allows the user to
