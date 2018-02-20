@@ -36,7 +36,7 @@ bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
 ```
 
-* AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
+* AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
 * Everything else is considered an input file, useful for batching!
 
 
@@ -51,8 +51,11 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>
 ### M4B Encoding
 
 ### Defaults
-    - If you have a .authcode file available in the current working directory, it will read the first line of
-that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
+*Specifying the AUTHCODE.
+In order of precidence.
+**[AUTHCODE]
+**.authcode
+**~/.aaxto_config
 
 ## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simply allows the user to
