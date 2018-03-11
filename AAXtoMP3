@@ -34,6 +34,13 @@ fi
 #    shift
 #fi
 
+if [[ "$1" = '--opus' ]]
+then
+    codec=libopus
+    extension=ogg
+    shift
+fi
+
 if [[ "$1" == '--single' ]]
 then
     mode=single
@@ -108,7 +115,16 @@ do
                 read -r -u9 _ _ chapter
                 chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
                 chapter_file="${output_directory}/${chapter_title}.${extension}"
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
+
+                # the ID3 tags must only be specified for *.mp3 files,
+                # the other container formats come with their own
+                # tagging mechanisms.
+                id3_version_param=""
+                if test "${extension}" = "mp3"; then
+                   id3_version_param="-id3v2_version 3"
+                fi
+
+                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
                 chapternum=$((chapternum + 1 ))
