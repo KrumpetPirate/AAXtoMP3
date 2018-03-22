@@ -30,16 +30,15 @@ conversions in OSX. It is recommended that you install GNU grep using 'brew inst
 Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.archlinux.org/packages/aaxtomp3-git/). Note that you will still need to extract your activation bytes before use.
 
 ## Usage
-```
-bash AAXtoMP3 [--flac] [--opus] [--single] AUTHCODE {FILES}
+```bash
+bash AAXtoMP3 [--flac] [--aac] [--opus] [--single] AUTHCODE {FILES}
 ```
 * AUTHCODE: **your** Audible auth code (it won't correctly decode otherwise) (required)
 * Everything else is considered an input file, useful for batching!
 
 Note that any optional flags have to be inputed *in order* to function correctly.
 
-Additionally, if you have a .authcode file available in the current working directory, it will read the first line of
-that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
+Additionally, if you have a .authcode file available in either your home directory or the current working directory, it will read the first line of that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
 
 ## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simply allows the user to
