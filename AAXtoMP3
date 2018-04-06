@@ -6,7 +6,8 @@ codec=libmp3lame
 extension=mp3
 mode=chaptered
 authcode=".authcode";
-authcodeDirs="${HOME}/ ./";
+if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
+authcodeDirs="${HOME}/ ./"
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [[ $(type -P "$GREP") ]]; then
