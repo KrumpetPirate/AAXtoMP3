@@ -8,7 +8,6 @@ mode=chaptered
 authcode=".authcode";
 if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
 authcodeDirs="${HOME}/ ./"
-
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [[ $(type -P "$GREP") ]]; then
