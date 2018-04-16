@@ -18,7 +18,7 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AXtoMP3 [--flac] [--aac] [--opus ] [--single] AUTHCODE {FILES}"
+        echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] AUTHCODE {FILES}"
         echo "	Note that order does matter!"
         exit 1
 fi
