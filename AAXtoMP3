@@ -5,6 +5,9 @@ set -o errexit -o noclobber -o nounset -o pipefail
 codec=libmp3lame
 extension=mp3
 mode=chaptered
+authcode=".authcode";
+if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
+authcodeDirs="${HOME}/ ./"
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [[ $(type -P "$GREP") ]]; then
@@ -15,7 +18,8 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
+        echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] AUTHCODE {FILES}"
+        echo "	Note that order does matter!"
         exit 1
 fi
 
@@ -26,18 +30,47 @@ then
     shift
 fi
 
+if [[ "$1" == '--aac' ]]
+then
+    codec=copy
+    extension=m4a
+    mode=single
+    shift
+fi
+
+if [[ "$1" = '--opus' ]]
+then
+    codec=libopus
+    extension=ogg
+    shift
+fi
+
 if [[ "$1" == '--single' ]]
 then
     mode=single
     shift
 fi
 
-if [ ! -f .authcode ]; then
-    auth_code=$1
-    shift
-else
-    auth_code=`head -1 .authcode`
-fi
+auth_code="";
+for dir in $authcodeDirs; do
+	codeFile="${dir}$authcode";
+
+	if [ ! -f "$codeFile" ]; then
+		auth_code=$1
+		shift
+		break;
+	elif [ -s "$codeFile" ]; then
+		auth_code=`head -1 "$codeFile"`
+		break;
+	else
+		echo "INFO: Sorry, empty \"$codeFile\" found, skipping.";
+	fi;
+done;
+
+if [ -z "$auth_code" ]; then
+	echo "INFO: Sorry, no authcode provided.";
+	exit 1;
+fi;
 
 debug() {
     echo "$(date "+%F %T%z") ${1}"
@@ -74,7 +107,7 @@ do
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title)
+    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
     output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
@@ -105,7 +138,16 @@ do
                 read -r -u9 _ _ chapter
                 chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
                 chapter_file="${output_directory}/${chapter_title}.${extension}"
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
+
+                # the ID3 tags must only be specified for *.mp3 files,
+                # the other container formats come with their own
+                # tagging mechanisms.
+                id3_version_param=""
+                if test "${extension}" = "mp3"; then
+                   id3_version_param="-id3v2_version 3"
+                fi
+
+                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
                 
