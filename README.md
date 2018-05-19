@@ -2,7 +2,7 @@
 The purpose of this software is to convert AAX files to common MP3, M4A and M4B formats
 through a basic bash script frontend to FFMPEG.
 
-Audible uses this file format, AAX to maintain DRM restrictions on their audio
+Audible uses this file format to maintain DRM restrictions on their audio
 books and if you download your book through your library it will be
 stored in this format.
 
@@ -31,7 +31,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-s|--single] [-a|--authcode <AUTHCODE>] [-o|--output_dir <PATH>] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-A|--authcode <AUTHCODE>] [-o|--output_dir <PATH>] <AAX INPUT_FILES>...
 bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>...
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
@@ -41,11 +41,24 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 
 
 ### MP3 Encoding
+* This is the default encoding
 * Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the **--single** option
 * If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also be created in this instance.
-* If you desire flac encoding. use the **--flac** option.  It's a bit faster but also a bit less compatible.
 
-### M4A Encoding
+### Ogg/Opus Encoding
+* Can be done by using the -o or --opus command line switches
+* Is designed to efficiently code speech and general audio in a single format
+* Opus coded files are stored in the ogg container format for better compatibilitt.
+
+### AAC Encoding
+* Can be done by using the -a or --aac command line switches
+* Designed to be the successor of the MP3 format
+* Generally achieves better sound quality than MP3 at the same bit rate.
+* This will only produce 1 audio file as output.
+
+### FLAC Encoding
+* Can be done by using the -f or --flac command line switches
+* FLAC is an open format with royalty-free licensing 
 
 ### M4B Encoding
 

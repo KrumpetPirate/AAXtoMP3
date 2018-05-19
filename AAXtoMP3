@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # ========================================================================
 # Command Line Options
 usage=$'\nUsage: AAXtoMP3.sh [--flac] [--aac] [--opus ] [--single] [--authcode <AUTHCODE>]\n[--output_dir <PATH>] {FILES}\n'
@@ -99,6 +100,9 @@ normalize_whitespace() {
 for path
 do
     debug "Decoding ${path} with auth code ${auth_code}..."
+
+    # Check for Presense of Audiobook
+    [ ! -r "${path}" ] && echo "ERROR: Input file $path missing" ; exit 1
 
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
