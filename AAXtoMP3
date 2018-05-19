@@ -1,10 +1,38 @@
 #!/usr/bin/env bash
 
-set -o errexit -o noclobber -o nounset -o pipefail
-
+# ========================================================================
+# Command Line Options
+usage=$'\nUsage: AAXtoMP3.sh [--flac] [--aac] [--opus ] [--single] [--authcode <AUTHCODE>]\n[--output_dir <PATH>] {FILES}\n'
 codec=libmp3lame
 extension=mp3
 mode=chaptered
+auth_code=
+targetdir=
+
+while true; do
+  case "$1" in
+    -f | --flac       ) codec=flac; extension=flac; shift ;;
+    -a | --aac        ) codec=copy; extension=m4a; mode=single ;shift ;;
+    -o | --opus       ) codec=libopus; extension=ogg; shift ;;
+    -s | --single     ) mode=single; shift ;;
+    -t | --target_dir ) targetdir="$2"; shift 2 ;;
+    -A | --authcode   ) auth_code="$2"; shift 2 ;; 
+    -d | --debug      ) DEBUG=1; shift ;;              # Not so secret flag for debug output.  to use in code  [ $DEBUG == 1 ] && sample=2
+    -h | --help       ) printf "$usage" $0 ; exit ;;
+    --                ) shift; break ;;
+    *                 ) break ;;
+  esac
+done
+
+if [ "$#" -eq 0 ]; then
+  printf "$usage" $0
+  exit 1
+fi
+
+# ========================================================================
+# Variable validation
+set -o errexit -o noclobber -o nounset -o pipefail
+
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [[ $(type -P "$GREP") ]]; then
@@ -14,30 +42,29 @@ if ! [[ $(type -P "$GREP") ]]; then
     exit 1
 fi
 
-if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
-        exit 1
-fi
-
-if [[ "$1" = '--flac' ]]
-then
-    codec=flac
-    extension=flac
-    shift
-fi
-
-if [[ "$1" == '--single' ]]
-then
-    mode=single
-    shift
-fi
-
-if [ ! -f .authcode ]; then
-    auth_code=$1
-    shift
-else
+# Obtain the authcode from either the command line,  local directory or home directory.
+if [ -z $auth_code ]; then
+  if [ -r .authcode ]; then
     auth_code=`head -1 .authcode`
+  elif [ -r ~/.authcode ]; then
+    auth_code=`head -1 ~/.authcode`
+  fi
 fi
+if [ -z $auth_code ]; then
+  echo "ERROR Missing authcode"
+  echo "$usage"
+  exit 1  
+fi
+
+# Check the target dir for if set if it is writable
+if [[ ! -w "${targetdir}" || ! -d "${targetdir}" ]] ; then
+  echo "ERROR Target Directory is not writable: \"$targetdir\""
+  echo "$usage"
+  exit 1 
+fi
+
+# ========================================================================
+# Utility Functions
 
 debug() {
     echo "$(date "+%F %T%z") ${1}"
@@ -67,6 +94,8 @@ normalize_whitespace() {
     echo $*
 }
 
+# ========================================================================
+# Main Transcode Loop
 for path
 do
     debug "Decoding ${path} with auth code ${auth_code}..."
@@ -74,21 +103,29 @@ do
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title)
-    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
+    if [ ! -z targetdir ] ; then
+      output_directory="${targetdir}/${genre}/${artist}/${title}"
+    else
+      output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+    fi
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
 
+    # This is the primary transcode. All the heavy lifting is here.
     </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
 
     debug "Created ${full_file_path}."
 
+    # Grab the cover art if available.
     cover_path="${output_directory}/cover.jpg"
 
     debug "Extracting cover into ${cover_path}..."
     </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
 
+    # If we want multiple file we take the big mp3 and split it by chapter.
     if [ "${mode}" == "chaptered" ]; then
+        # Playlist m3u support
         playlist_file="${output_directory}/${title}.m3u"
         debug "Creating PlayList ${title}.m3u"
         echo '#EXTM3U' > "${playlist_file}"
@@ -105,7 +142,16 @@ do
                 read -r -u9 _ _ chapter
                 chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
                 chapter_file="${output_directory}/${chapter_title}.${extension}"
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -c copy -map 0:0 -map 1:0 -id3v2_version 3 \
+                
+                # the ID3 tags must only be specified for *.mp3 files,
+                # the other container formats come with their own
+                # tagging mechanisms.
+                id3_version_param=""
+                if test "${extension}" = "mp3"; then
+                   id3_version_param="-id3v2_version 3"
+                fi
+
+                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
                 
