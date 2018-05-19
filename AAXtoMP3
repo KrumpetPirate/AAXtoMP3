@@ -12,7 +12,7 @@ targetdir=
 
 while true; do
   case "$1" in
-    -f | --flac       ) codec=flac; extension=flac; shift ;;
+    -f | --flac       ) codec=flac; extension=flac; mode=single ; shift ;;
     -a | --aac        ) codec=copy; extension=m4a; mode=single ;shift ;;
     -o | --opus       ) codec=libopus; extension=ogg; shift ;;
     -s | --single     ) mode=single; shift ;;
