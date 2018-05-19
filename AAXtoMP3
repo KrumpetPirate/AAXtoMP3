@@ -83,6 +83,16 @@ debug() {
   fi
 }
 
+# debug dump contents of a file to STDOUT
+debug_file() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG"
+    echo "================================================================================"
+    cat "${1}"
+    echo "================================================================================"
+  fi
+}
+
 # log
 log() {
     echo "$(date "+%F %T%z") ${1}"
@@ -96,6 +106,8 @@ save_metadata() {
     local media_file
     media_file="$1"
     ffprobe -i "$media_file" 2> "$metadata_file"
+    debug "Metadata file $metadata_file"
+    debug_file "$metadata_file"
 }
 
 get_metadata_value() {
