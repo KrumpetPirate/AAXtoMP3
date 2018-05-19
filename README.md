@@ -39,26 +39,27 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
 ### MP3 Encoding
-* This is the default encoding
+* This is the **default** encoding
 * Produces 1 or more mp3 files for the AAX title.  If you desire a single file use the **--single** option
 * If you want a mp3 file per chapter do not use the -single option. Note a m3u playlist file will also be created in this instance.
 
 ### Ogg/Opus Encoding
-* Can be done by using the -o or --opus command line switches
-* Is designed to efficiently code speech and general audio in a single format
-* Opus coded files are stored in the ogg container format for better compatibilitt.
+* Can be done by using the **-o** or **--opus** command line switches
+* Is designed to efficiently code speech and general audio in a **--single** format
+* Opus coded files are stored in the ogg container format for better compatibility.
 
 ### AAC Encoding
-* Can be done by using the -a or --aac command line switches
+* Can be done by using the **-a** or **--aac** command line switches
 * Designed to be the successor of the MP3 format
 * Generally achieves better sound quality than MP3 at the same bit rate.
 * This will only produce 1 audio file as output.
 
 ### FLAC Encoding
-* Can be done by using the -f or --flac command line switches
+* Can be done by using the **-f** or **--flac** command line switches
 * FLAC is an open format with royalty-free licensing 
 
 ### M4B Encoding
+
 
 ### Defaults
 * Specifying the AUTHCODE.
@@ -66,8 +67,11 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
     1. __--authcode [AUTHCODE]__ The command line option. With the highest precidence.
     2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
     3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
-Note: At least one of the above must be specified. The code must also match the encoding for the user that owns the AAX file(s).
-
+    4. Note: At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occure.
+* Default out put directory is the base directoy of each file listed. Plus the genre, Artist and Title of the Audio Book.
+* The default codec is mp3
+* The default output is by chapter, unless the codec does not support it.
+ 
 ## Anti-Piracy Notice
 Note that this project does NOT ‘crack’ the DRM. It simply allows the user to
 use their own encryption key (fetched from Audible servers) to decrypt the
