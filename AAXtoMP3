@@ -9,7 +9,13 @@ extension=mp3
 mode=chaptered
 auth_code=
 targetdir=
+DEBUG=0
 
+# -----
+# Code tip Do not have any script above this point that calls a function or a binary.  If you do
+# the $1 will no longer be a ARGV element.  So you should only do basic variable setting above here.
+#
+# Process the command line options.  This allows for un-ordered options. Sorta like a getops style
 while true; do
   case "$1" in
     -f | --flac       ) codec=flac; extension=flac; mode=single ; shift ;;
@@ -18,13 +24,14 @@ while true; do
     -s | --single     ) mode=single; shift ;;
     -t | --target_dir ) targetdir="$2"; shift 2 ;;
     -A | --authcode   ) auth_code="$2"; shift 2 ;; 
-    -d | --debug      ) DEBUG=1; shift ;;              # Not so secret flag for debug output.  to use in code  [ $DEBUG == 1 ] && sample=2
+    -d | --debug      ) DEBUG=1; shift ;;
     -h | --help       ) printf "$usage" $0 ; exit ;;
     --                ) shift; break ;;
     *                 ) break ;;
   esac
 done
 
+# Empty argv means we have nothing to do so lets bark some help.
 if [ "$#" -eq 0 ]; then
   printf "$usage" $0
   exit 1
@@ -43,6 +50,7 @@ if ! [[ $(type -P "$GREP") ]]; then
     exit 1
 fi
 
+# -----
 # Obtain the authcode from either the command line,  local directory or home directory.
 if [ -z $auth_code ]; then
   if [ -r .authcode ]; then
@@ -57,6 +65,7 @@ if [ -z $auth_code ]; then
   exit 1  
 fi
 
+# -----
 # Check the target dir for if set if it is writable
 if [[ ! -w "${targetdir}" || ! -d "${targetdir}" ]] ; then
   echo "ERROR Target Directory is not writable: \"$targetdir\""
@@ -67,7 +76,25 @@ fi
 # ========================================================================
 # Utility Functions
 
+# debug
 debug() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG ${1}"
+  fi
+}
+
+# debug dump contents of a file to STDOUT
+debug_file() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG"
+    echo "================================================================================"
+    cat "${1}"
+    echo "================================================================================"
+  fi
+}
+
+# log
+log() {
     echo "$(date "+%F %T%z") ${1}"
 }
 
@@ -79,6 +106,8 @@ save_metadata() {
     local media_file
     media_file="$1"
     ffprobe -i "$media_file" 2> "$metadata_file"
+    debug "Metadata file $metadata_file"
+    debug_file "$metadata_file"
 }
 
 get_metadata_value() {
@@ -99,7 +128,7 @@ normalize_whitespace() {
 # Main Transcode Loop
 for path
 do
-    debug "Decoding ${path} with auth code ${auth_code}..."
+    log "Decoding ${path} with auth code ${auth_code}..."
 
     # Check for Presense of Audiobook
     if [[ ! -r "${path}" ]] ; then 
@@ -118,27 +147,35 @@ do
     fi
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
+    bitrate="$(get_bitrate)k"
+    album_artist="$(get_metadata_value album_artist)"
+    album="$(get_metadata_value album)"
+    album_date="$(get_metadata_value date)"
+    copyright="$(get_metadata_value copyright)"
+
+    # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
+    debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
 
     # This is the primary transcode. All the heavy lifting is here.
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
+    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
 
-    debug "Created ${full_file_path}."
+    log "Created ${full_file_path}."
 
     # Grab the cover art if available.
     cover_path="${output_directory}/cover.jpg"
 
-    debug "Extracting cover into ${cover_path}..."
+    log "Extracting cover into ${cover_path}..."
     </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
 
     # If we want multiple file we take the big mp3 and split it by chapter.
     if [ "${mode}" == "chaptered" ]; then
         # Playlist m3u support
         playlist_file="${output_directory}/${title}.m3u"
-        debug "Creating PlayList ${title}.m3u"
+        log "Creating PlayList ${title}.m3u"
         echo '#EXTM3U' > "${playlist_file}"
 
         chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-        debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
+        log "Extracting ${chaptercount} chapter files from ${full_file_path}..."
 
         chapternum=1
         while read -r -u9 first _ _ start _ end
@@ -158,6 +195,10 @@ do
                    id3_version_param="-id3v2_version 3"
                 fi
 
+                # Big Long chapter debug  I could probably do this better.
+                debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
+
+                # Extract chapter by time stamps start and finish of chapter.
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
@@ -169,9 +210,9 @@ do
             fi
         done 9< "$metadata_file"
         rm "${full_file_path}"
-        debug "Done creating chapters. Chaptered files contained in ${output_directory}."
+        log "Done creating chapters. Chaptered files contained in ${output_directory}."
     fi
 
-    debug "Done."
+    log "Done. ${title}"
     rm "${metadata_file}"
 done

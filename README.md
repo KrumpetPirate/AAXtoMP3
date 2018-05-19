@@ -1,4 +1,4 @@
-# AAXtoMP3 AAXtoM4A AAxtoM4B
+# AAXtoMP3 AAxtoM4B
 The purpose of this software is to convert AAX files to common MP3, M4A and M4B formats
 through a basic bash script frontend to FFMPEG.
 
@@ -32,7 +32,6 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 ## Usage(s)
 ```
 bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-A|--authcode <AUTHCODE>] [-o|--output_dir <PATH>] <AAX INPUT_FILES>...
-bash AAXtoM4A [AUTHCODE] <AAX INPUT_FILES>...
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
 
