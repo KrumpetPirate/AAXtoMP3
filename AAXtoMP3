@@ -41,13 +41,14 @@ fi
 # Variable validation
 set -o errexit -o noclobber -o nounset -o pipefail
 
+# -----
+# Detect which annoying version fo grep we have
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
-
 if ! [[ $(type -P "$GREP") ]]; then
-    echo "$GREP (GNU grep) is not in your PATH"
-    echo "Without it, this script will break."
-    echo "On macOS, you may want to try: brew install grep"
-    exit 1
+  echo "$GREP (GNU grep) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install grep"
+  exit 1
 fi
 
 # -----
@@ -95,124 +96,140 @@ debug_file() {
 
 # log
 log() {
-    echo "$(date "+%F %T%z") ${1}"
+  echo "$(date "+%F %T%z") ${1}"
 }
 
+# Clean up if someone hits ^c
 trap 'rm -r -f "${working_directory}"' EXIT
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
+# -----
+# Inspect the AAX and extract the metadata associated with the file.
 save_metadata() {
-    local media_file
-    media_file="$1"
-    ffprobe -i "$media_file" 2> "$metadata_file"
-    debug "Metadata file $metadata_file"
-    debug_file "$metadata_file"
+  local media_file
+  media_file="$1"
+  ffprobe -i "$media_file" 2> "$metadata_file"
+  debug "Metadata file $metadata_file"
+  debug_file "$metadata_file"
 }
 
+# -----
+# Reach into the meta data and extract a specific value.
+#   Note the white space clean up could be well cleaner.
 get_metadata_value() {
-    local key
-    key="$1"
-    normalize_whitespace "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+  local key
+  key="$1"
+  normalize_whitespace "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
 }
 
+# -----
+# specific varient of get_metadata_value bitrate is important for transcoding.
 get_bitrate() {
-    get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
+  get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
 }
 
+# -----
+# simple function to turn tabs and multiple spaces into a single space.
 normalize_whitespace() {
-    echo $*
+  echo $*
 }
 
 # ========================================================================
 # Main Transcode Loop
 for path
 do
-    log "Decoding ${path} with auth code ${auth_code}..."
+  log "Decoding ${path} with auth code ${auth_code}..."
 
-    # Check for Presense of Audiobook
-    if [[ ! -r "${path}" ]] ; then 
-      echo "ERROR: Input Audiobook file $path missing"
-      exit 1
-    fi
+  # Check for Presense of Audiobook
+  if [[ ! -r "${path}" ]] ; then 
+    echo "ERROR: Input Audiobook file $path missing"
+    exit 1
+  fi
 
-    save_metadata "${path}"
-    genre=$(get_metadata_value genre)
-    artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
-    if [ ! -z targetdir ] ; then
-      output_directory="${targetdir}/${genre}/${artist}/${title}"
-    else
-      output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
-    fi
-    mkdir -p "${output_directory}"
-    full_file_path="${output_directory}/${title}.${extension}"
-    bitrate="$(get_bitrate)k"
-    album_artist="$(get_metadata_value album_artist)"
-    album="$(get_metadata_value album)"
-    album_date="$(get_metadata_value date)"
-    copyright="$(get_metadata_value copyright)"
+  # -----
+  # Make sure everything is a variable.  Simplifying CMD interpretation
+  save_metadata "${path}"
+  genre=$(get_metadata_value genre)
+  artist=$(get_metadata_value artist)
+  title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
+  if [ ! -z targetdir ] ; then
+    output_directory="${targetdir}/${genre}/${artist}/${title}"
+  else
+    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+  fi
+  mkdir -p "${output_directory}"
+  full_file_path="${output_directory}/${title}.${extension}"
+  bitrate="$(get_bitrate)k"
+  album_artist="$(get_metadata_value album_artist)"
+  album="$(get_metadata_value album)"
+  album_date="$(get_metadata_value date)"
+  copyright="$(get_metadata_value copyright)"
 
-    # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
-    debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
+  # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
+  debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
 
-    # This is the primary transcode. All the heavy lifting is here.
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
+  # -----
+  # This is the main work horse command.  This is the primary transcoder.
+  # This is the primary transcode. All the heavy lifting is here.
+  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
 
-    log "Created ${full_file_path}."
+  log "Created ${full_file_path}."
 
-    # Grab the cover art if available.
-    cover_path="${output_directory}/cover.jpg"
+  # Grab the cover art if available.
+  cover_path="${output_directory}/cover.jpg"
 
-    log "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
+  log "Extracting cover into ${cover_path}..."
+  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
 
-    # If we want multiple file we take the big mp3 and split it by chapter.
-    if [ "${mode}" == "chaptered" ]; then
-        # Playlist m3u support
-        playlist_file="${output_directory}/${title}.m3u"
-        log "Creating PlayList ${title}.m3u"
-        echo '#EXTM3U' > "${playlist_file}"
+  # -----
+  # OK now spit the file if that's what you want.
+  # If we want multiple file we take the big mp3 and split it by chapter.
+  if [ "${mode}" == "chaptered" ]; then
+    # Playlist m3u support
+    playlist_file="${output_directory}/${title}.m3u"
+    log "Creating PlayList ${title}.m3u"
+    echo '#EXTM3U' > "${playlist_file}"
 
-        chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-        log "Extracting ${chaptercount} chapter files from ${full_file_path}..."
+    chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
+    log "Extracting ${chaptercount} chapter files from ${full_file_path}..."
 
-        chapternum=1
-        while read -r -u9 first _ _ start _ end
-        do
-            if [[ "${first}" = "Chapter" ]]
-            then
-                read -r -u9 _
-                read -r -u9 _ _ chapter
-                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
-                chapter_file="${output_directory}/${chapter_title}.${extension}"
+    chapternum=1
+    while read -r -u9 first _ _ start _ end
+    do
+      if [[ "${first}" = "Chapter" ]]; then
+        read -r -u9 _
+        read -r -u9 _ _ chapter
+        chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
+        chapter_file="${output_directory}/${chapter_title}.${extension}"
                 
-                # the ID3 tags must only be specified for *.mp3 files,
-                # the other container formats come with their own
-                # tagging mechanisms.
-                id3_version_param=""
-                if test "${extension}" = "mp3"; then
-                   id3_version_param="-id3v2_version 3"
-                fi
+        # the ID3 tags must only be specified for *.mp3 files,
+        # the other container formats come with their own
+        # tagging mechanisms.
+        id3_version_param=""
+        if test "${extension}" = "mp3"; then
+          id3_version_param="-id3v2_version 3"
+        fi
 
-                # Big Long chapter debug  I could probably do this better.
-                debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
+        # Big Long chapter debug  I could probably do this better.
+        debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
 
-                # Extract chapter by time stamps start and finish of chapter.
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
-                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-                    "${chapter_file}"
-                
-                duration=$(echo "${end} - ${start%?}" | bc)
-                echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
-                echo "${chapter_title}.${extension}" >> "${playlist_file}"
-                chapternum=$((chapternum + 1 ))
-            fi
-        done 9< "$metadata_file"
-        rm "${full_file_path}"
-        log "Done creating chapters. Chaptered files contained in ${output_directory}."
-    fi
+        # Extract chapter by time stamps start and finish of chapter.
+        </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
+        -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
+        "${chapter_file}"
+        
+        # OK lets get what need for the next chapter in the Playlist m3u file.        
+        duration=$(echo "${end} - ${start%?}" | bc)
+        echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
+        echo "${chapter_title}.${extension}" >> "${playlist_file}"
+        chapternum=$((chapternum + 1 ))
+      fi
+    done 9< "$metadata_file"
+    rm "${full_file_path}"
+    log "Done creating chapters. Chaptered files contained in ${output_directory}."
+  fi
 
-    log "Done. ${title}"
-    rm "${metadata_file}"
+  log "Done. ${title}"
+  rm "${metadata_file}"
 done
