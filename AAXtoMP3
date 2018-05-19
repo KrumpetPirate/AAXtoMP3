@@ -102,7 +102,10 @@ do
     debug "Decoding ${path} with auth code ${auth_code}..."
 
     # Check for Presense of Audiobook
-    # [[ ! -r "${path}" ]] && echo "ERROR: Input file $path missing" ; exit 1
+    if [[ ! -r "${path}" ]] ; then 
+      echo "ERROR: Input Audiobook file $path missing"
+      exit 1
+    fi
 
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
