@@ -12,7 +12,7 @@ targetdir=
 DEBUG=0
 
 # -----
-# Code tip Do not have any scritp above this point that calls a function or a binary.  If you do
+# Code tip Do not have any script above this point that calls a function or a binary.  If you do
 # the $1 will no longer be a ARGV element.  So you should only do basic variable setting above here.
 #
 # Process the command line options.  This allows for un-ordered options. Sorta like a getops style
@@ -83,6 +83,16 @@ debug() {
   fi
 }
 
+# debug dump contents of a file to STDOUT
+debug_file() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG"
+    echo "================================================================================"
+    cat "${1}"
+    echo "================================================================================"
+  fi
+}
+
 # log
 log() {
     echo "$(date "+%F %T%z") ${1}"
@@ -96,6 +106,8 @@ save_metadata() {
     local media_file
     media_file="$1"
     ffprobe -i "$media_file" 2> "$metadata_file"
+    debug "Metadata file $metadata_file"
+    debug_file "$metadata_file"
 }
 
 get_metadata_value() {
@@ -135,9 +147,17 @@ do
     fi
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
+    bitrate="$(get_bitrate)k"
+    album_artist="$(get_metadata_value album_artist)"
+    album="$(get_metadata_value album)"
+    album_date="$(get_metadata_value date)"
+    copyright="$(get_metadata_value copyright)"
+
+    # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
+    debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
 
     # This is the primary transcode. All the heavy lifting is here.
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
+    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
 
     log "Created ${full_file_path}."
 
@@ -175,6 +195,10 @@ do
                    id3_version_param="-id3v2_version 3"
                 fi
 
+                # Big Long chapter debug  I could probably do this better.
+                debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
+
+                # Extract chapter by time stamps start and finish of chapter.
                 </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
