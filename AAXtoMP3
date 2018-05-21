@@ -31,6 +31,7 @@ while true; do
   esac
 done
 
+
 # Empty argv means we have nothing to do so lets bark some help.
 if [ "$#" -eq 0 ]; then
   printf "$usage" $0
@@ -78,6 +79,7 @@ fi
 # Utility Functions
 
 # debug
+
 debug() {
   if [ $DEBUG == 1 ] ; then
     echo "$(date "+%F %T%z") DEBUG ${1}"
@@ -202,6 +204,7 @@ do
         read -r -u9 _ _ chapter
         chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
         chapter_file="${output_directory}/${chapter_title}.${extension}"
+
                 
         # the ID3 tags must only be specified for *.mp3 files,
         # the other container formats come with their own
