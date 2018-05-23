@@ -32,7 +32,6 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 ## Usage(s)
 ```
 bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
-bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
 
 * **[AUTHCODE]** **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
