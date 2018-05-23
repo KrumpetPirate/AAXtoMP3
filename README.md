@@ -31,12 +31,23 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-A|--authcode <AUTHCODE>] [-o|--output_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
 bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ```
 
 * **[AUTHCODE]** **your** Audible auth code (it won't correctly decode otherwise) (required), See below for more information on setting the AUTHCODE.
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
+
+## Options ##
+* -f or --flac   Flac Encoding and Produces a single file.
+* -o or --opus   Ogg/Opus Encoding defaults to multiple file output by chapter. The extention is .ogg
+* -a or --aac    AAC Encoding and produce a m4a single files output.
+* -s or --single Output a single file. If you only want a single ogg file for instance.
+* -A or --authcode <AUTHCODE> for this execution of the command use the provided AUTHCODE to decode the AAX file.
+* -t or --target_dir <PATH> change the default output location to the named PATH. Note the default location is ./Audiobook of the directory to which each AAX file resides.
+* -e:mp3         Identical to defaults.
+* -e:m4a         Create a m4a audio file. This is identical to --aac
+* -e:m4b         Create a m4b aduio file. This is the book version of the m4a format. 
 
 ### MP3 Encoding
 * This is the **default** encoding
@@ -57,9 +68,6 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 ### FLAC Encoding
 * Can be done by using the **-f** or **--flac** command line switches
 * FLAC is an open format with royalty-free licensing 
-
-### M4B Encoding
-
 
 ### Defaults
 * Specifying the AUTHCODE.

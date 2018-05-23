@@ -3,13 +3,16 @@
 
 # ========================================================================
 # Command Line Options
-usage=$'\nUsage: AAXtoMP3.sh [--flac] [--aac] [--opus ] [--single] [--authcode <AUTHCODE>]\n[--output_dir <PATH>] {FILES}\n'
-codec=libmp3lame
-extension=mp3
-mode=chaptered
-auth_code=
-targetdir=
-DEBUG=0
+
+# Usage Synopsis.
+usage=$'\nUsage: AAXtoMP3.sh [--flac] [--aac] [--opus ] [--single] [-e:m4a] [-e:m4b]\n[--authcode <AUTHCODE>] [--output_dir <PATH>] {FILES}\n'
+codec=libmp3lame            # Default encoder.
+extension=mp3               # Default encoder extention.
+mode=chaptered              # Multi file output
+auth_code=                  # Required to be set via file or option.
+targetdir=                  # Optional output location.  Note default is basedir of AAX file.
+DEBUG=0                     # Default off, If set extremely verbose output.
+container=                  # Just in case we need to change the container.  Used for M4A to M4B
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -17,21 +20,38 @@ DEBUG=0
 #
 # Process the command line options.  This allows for un-ordered options. Sorta like a getops style
 while true; do
-  case "$1" in
-    -f | --flac       ) codec=flac; extension=flac; mode=single ; shift ;;
-    -a | --aac        ) codec=copy; extension=m4a; mode=single ;shift ;;
-    -o | --opus       ) codec=libopus; extension=ogg; shift ;;
-    -s | --single     ) mode=single; shift ;;
-    -t | --target_dir ) targetdir="$2"; shift 2 ;;
-    -A | --authcode   ) auth_code="$2"; shift 2 ;; 
-    -d | --debug      ) DEBUG=1; shift ;;
-    -h | --help       ) printf "$usage" $0 ; exit ;;
-    --                ) shift; break ;;
-    *                 ) break ;;
+  case "$1" in 
+                      # Flac encoding
+    -f | --flac       ) codec=flac;    extension=flac; mode=single ;                shift ;;        
+                      # Apple m4a music format.
+    -a | --aac        ) codec=copy;    extension=m4a; mode=single ;                 shift ;;        
+                      # Ogg Format
+    -o | --opus       ) codec=libopus; extension=ogg;                               shift ;;        
+                      # If appropriate use only a single file output.
+    -s | --single     ) mode=single;                                                shift ;;        
+                      # This is the same as --single option.
+    -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single;               shift ;;
+                      # Identical to --acc option.
+    -e:m4a            ) codec=copy; extension=m4a; mode=single;                     shift ;;
+                      # Similiar to --aac but specific to audio books.
+    -e:m4b            ) codec=copy; extension=m4a; mode=single; container=m4b       shift ;;
+                      # Change the working dir from AAX directory to what you choose.
+    -t | --target_dir ) targetdir="$2";                                             shift 2 ;;      
+                      # Authorization code associate with the AAX file(s)
+    -A | --authcode   ) auth_code="$2";                                             shift 2 ;;      
+                      # Extremely verbose output.
+    -d | --debug      ) DEBUG=1;                                                    shift ;;        
+                      # Command synopsis.
+    -h | --help       ) printf "$usage" $0 ;                                        exit ;;         
+                      # Standard flag signifying the end of command line processing.
+    --                )                                                             shift; break ;; 
+                      # Anything else stops command line processing.
+    *                 )                                                             break ;;        
+
   esac
 done
 
-
+# -----
 # Empty argv means we have nothing to do so lets bark some help.
 if [ "$#" -eq 0 ]; then
   printf "$usage" $0
@@ -54,6 +74,8 @@ fi
 
 # -----
 # Obtain the authcode from either the command line,  local directory or home directory.
+# See Readme.md for details on how to aquire your personal authcode for your personal
+# audible AAX files.
 if [ -z $auth_code ]; then
   if [ -r .authcode ]; then
     auth_code=`head -1 .authcode`
@@ -61,6 +83,7 @@ if [ -z $auth_code ]; then
     auth_code=`head -1 ~/.authcode`
   fi
 fi
+# No point going on if no authcode found.
 if [ -z $auth_code ]; then
   echo "ERROR Missing authcode"
   echo "$usage"
@@ -78,14 +101,15 @@ fi
 # ========================================================================
 # Utility Functions
 
+# -----
 # debug
-
 debug() {
   if [ $DEBUG == 1 ] ; then
     echo "$(date "+%F %T%z") DEBUG ${1}"
   fi
 }
 
+# -----
 # debug dump contents of a file to STDOUT
 debug_file() {
   if [ $DEBUG == 1 ] ; then
@@ -96,11 +120,13 @@ debug_file() {
   fi
 }
 
+# -----
 # log
 log() {
   echo "$(date "+%F %T%z") ${1}"
 }
 
+# -----
 # Clean up if someone hits ^c
 trap 'rm -r -f "${working_directory}"' EXIT
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
@@ -143,18 +169,19 @@ for path
 do
   log "Decoding ${path} with auth code ${auth_code}..."
 
-  # Check for Presense of Audiobook
+  # Check for Presense of Audiobook.  Note this break the processing of 
+  # of a list of books once a single missing file is found.
   if [[ ! -r "${path}" ]] ; then 
     echo "ERROR: Input Audiobook file $path missing"
     exit 1
   fi
 
   # -----
-  # Make sure everything is a variable.  Simplifying CMD interpretation
+  # Make sure everything is a variable.  Simplifying Command interpretation
   save_metadata "${path}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
-  title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
+  title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/  / /g' | sed 's/- /-/g' | xargs -0)
   if [ ! -z targetdir ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
@@ -169,6 +196,8 @@ do
   copyright="$(get_metadata_value copyright)"
 
   # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
+  # Not this is a long debug command. It's not critical to operation. It's purely for people debugging
+  # and coders wanting to extend the script.
   debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
 
   # -----
@@ -177,22 +206,25 @@ do
   </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
 
   log "Created ${full_file_path}."
+  # -----
 
   # Grab the cover art if available.
   cover_path="${output_directory}/cover.jpg"
-
   log "Extracting cover into ${cover_path}..."
   </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
 
   # -----
   # OK now spit the file if that's what you want.
   # If we want multiple file we take the big mp3 and split it by chapter.
+  # Not all audio encodings make sense with multiple chapter outputs.  See options section
+  # for more detail
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
     playlist_file="${output_directory}/${title}.m3u"
     log "Creating PlayList ${title}.m3u"
     echo '#EXTM3U' > "${playlist_file}"
 
+    # Determine the number of chapters.
     chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
     log "Extracting ${chaptercount} chapter files from ${full_file_path}..."
 
@@ -202,6 +234,9 @@ do
       if [[ "${first}" = "Chapter" ]]; then
         read -r -u9 _
         read -r -u9 _ _ chapter
+
+        # The formating of the chapters names and the file names.  
+        # Chapter names are used in a few place.
         chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
         chapter_file="${output_directory}/${chapter_title}.${extension}"
 
@@ -218,21 +253,33 @@ do
         debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
 
         # Extract chapter by time stamps start and finish of chapter.
+        # This extracts based on time stamps start and end.
         </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         "${chapter_file}"
         
-        # OK lets get what need for the next chapter in the Playlist m3u file.        
+        # -----
+        # OK lets get what need for the next chapter in the Playlist m3u file.
+        # Playlist creation.        
         duration=$(echo "${end} - ${start%?}" | bc)
         echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
         echo "${chapter_title}.${extension}" >> "${playlist_file}"
         chapternum=$((chapternum + 1 ))
       fi
     done 9< "$metadata_file"
+
+    # Clean up of working directoy stuff.
     rm "${full_file_path}"
     log "Done creating chapters. Chaptered files contained in ${output_directory}."
   fi
 
+  # Detect if we are actuall m4b instead of m4a
+  if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
+    mv "${full_file_path}" "${full_file_path/.m4a/.m4b}"
+  fi
+
+
   log "Done. ${title}"
+  # Lastly get rid of any extra stuff.
   rm "${metadata_file}"
 done
