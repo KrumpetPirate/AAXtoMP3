@@ -1,5 +1,5 @@
-# AAXtoMP3 AAxtoM4B
-The purpose of this software is to convert AAX files to common MP3, M4A and M4B formats
+# AAXtoMP3
+The purpose of this software is to convert AAX files to common MP3, M4A, M4B, flac and ogg formats
 through a basic bash script frontend to FFMPEG.
 
 Audible uses this file format to maintain DRM restrictions on their audio
