@@ -39,15 +39,15 @@ bash AAXtoM4B [AUTHCODE] <AAX INPUT_FILES>...
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
 ## Options ##
-* -f or --flac   Flac Encoding and Produces a single file.
-* -o or --opus   Ogg/Opus Encoding defaults to multiple file output by chapter. The extention is .ogg
-* -a or --aac    AAC Encoding and produce a m4a single files output.
-* -s or --single Output a single file. If you only want a single ogg file for instance.
-* -A or --authcode <AUTHCODE> for this execution of the command use the provided AUTHCODE to decode the AAX file.
-* -t or --target_dir <PATH> change the default output location to the named PATH. Note the default location is ./Audiobook of the directory to which each AAX file resides.
-* -e:mp3         Identical to defaults.
-* -e:m4a         Create a m4a audio file. This is identical to --aac
-* -e:m4b         Create a m4b aduio file. This is the book version of the m4a format. 
+* **-f** or **--flac**   Flac Encoding and Produces a single file.
+* **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extention is .ogg
+* **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
+* **-s** or **--single** Output a single file. If you only want a single ogg file for instance.
+* **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
+* **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
+* **-e:mp3**         Identical to defaults.
+* **-e:m4a**         Create a m4a audio file. This is identical to --aac
+* **-e:m4b**         Create a m4b aduio file. This is the book version of the m4a format. 
 
 ### MP3 Encoding
 * This is the **default** encoding
