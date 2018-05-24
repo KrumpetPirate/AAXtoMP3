@@ -73,6 +73,18 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 # -----
+# Detect if we need mp4art for cover additions to m4a & m4b files.
+if [[ "x${extension}" == "xm4a" && "x$(type -P mp4art)" == "x" ]]; then
+  echo "WARN mp4art was not found on your env PATH variable"
+  echo "Without it, this script will not be able to add cover art to"
+  echo "m4b files. Note if there are no other errors the AAXtoMP3 will"
+  echo "continue. However no cover art will be added to the output."
+  echo "INSTALL:" 
+  echo "MacOS:   brew install mp4v2"
+  echo "Ubuntu:  sudo apt-get install mp4v2-utils"
+fi
+
+# -----
 # Obtain the authcode from either the command line,  local directory or home directory.
 # See Readme.md for details on how to aquire your personal authcode for your personal
 # audible AAX files.
@@ -273,7 +285,15 @@ do
     log "Done creating chapters. Chaptered files contained in ${output_directory}."
   fi
 
-  # Detect if we are actuall m4b instead of m4a
+  # ----
+  # Add the cover art to m4a and m4b file types.
+  if [[ ${extension} == "m4a" && $(type -P mp4art) ]]; then
+    mp4art --add "${cover_path}" "${full_file_path}"
+    log "Added cover art."
+  fi 
+
+  # ----
+  # Detect if we are actuall m4b instead of m4a Then rename the file.
   if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
     mv "${full_file_path}" "${full_file_path/.m4a/.m4b}"
   fi

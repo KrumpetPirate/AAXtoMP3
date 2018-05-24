@@ -21,6 +21,8 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 * bash 4.3.42 or later tested
 * ffmpeg version 2.8.3 or later
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
+* grep Some OS distributions do not have it installed.
+* mp4art used to add cover art to m4a and m4b files. Optional
 
 ## OSX
 Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
@@ -67,6 +69,13 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-e:mp3] [-e:m4a] 
 ### FLAC Encoding
 * Can be done by using the **-f** or **--flac** command line switches
 * FLAC is an open format with royalty-free licensing 
+
+### M4A and M4B Containers ###
+* These containers were created by Apple Inc. They were meant to be the successor to mp3.
+* M4A is a container that is meant to hold music and is typically of a higher bitrate.
+* M4B is a container that is meant to hold audiobooks and is typically has bitrates of 64k and 32k.
+* Both formats are chaptered
+* Both support coverart internall
 
 ### Defaults
 * Specifying the AUTHCODE.
