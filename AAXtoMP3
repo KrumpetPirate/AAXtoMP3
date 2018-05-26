@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3.sh [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--output_dir <PATH>] {FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--output_dir <PATH>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
@@ -282,7 +282,6 @@ do
         duration=$(echo "${end} - ${start%?}" | bc)
         echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
         echo "${chapter_title}.${container}" >> "${playlist_file}"
-        echo "${container}  ${chapter_title}.${container}"
         chapternum=$((chapternum + 1 ))
 
         # ----
