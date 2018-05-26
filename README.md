@@ -56,10 +56,10 @@ this string from a tool like
 [audible-activator](https://github.com/inAudible-NG/audible-activator).
 
 #### Specifying the AUTHCODE.
-    In order of __precidence__.
-    1. __--authcode [AUTHCODE]__ The command line option. With the highest precidence.
-    2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
-    3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
+In order of __precidence__.
+1. __--authcode [AUTHCODE]__ The command line option. With the highest precidence.
+2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
+3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
 __Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occure.
 
 
