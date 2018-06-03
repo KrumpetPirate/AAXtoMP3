@@ -70,6 +70,7 @@ set -o errexit -o noclobber -o nounset -o pipefail
 
 # -----
 # debug
+# debug "Some longish message"
 debug() {
   if [ $DEBUG == 1 ] ; then
     echo "$(date "+%F %T%z") DEBUG ${1}"
@@ -78,14 +79,45 @@ debug() {
 
 # -----
 # debug dump contents of a file to STDOUT
+# debug "<full path to file>"
 debug_file() {
   if [ $DEBUG == 1 ] ; then
     echo "$(date "+%F %T%z") DEBUG"
-    echo "================================================================================"
+    echo "=Start=========================================================================="
     cat "${1}"
-    echo "================================================================================"
+    echo "=End============================================================================"
   fi
 }
+
+# -----
+# debug dump a list of internal script variables to STDOUT
+# debug_vars "Some Message" var1 var2 var3 var4 var5
+debug_vars() {
+  if [ $DEBUG == 1 ] ; then
+    msg="$1"; shift ; # Grab the message
+    args=("$@")       # Grab the rest of the args
+
+    # determine the length of the longest key
+    l=0
+    for (( n=0; n<${#args[@]}; n++ )) ; do
+      (( "${#args[$n]}" > "$l" )) && l=${#args[$n]}
+    done 
+
+    # Print the Debug Message
+    echo "$(date "+%F %T%z") DEBUG ${msg}"
+    echo "=Start=========================================================================="
+  
+    # Using the max length of a var name we dynamically create the format.  
+    fmt="%-"${l}"s = %s\n"
+
+    for (( n=0; n<${#args[@]}; n++ )) ; do
+      eval val="\$${args[$n]}"              ; # We save off the value of the var in question for ease of coding.
+
+      echo "$(printf "${fmt}" ${args[$n]} "${val}" )"
+    done
+    echo "=End============================================================================"
+  fi
+} 
 
 # -----
 # log
@@ -95,11 +127,10 @@ log() {
 
 # -----
 # Print out what we have already after command line processing.
-debug "Command line options as set:$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' codec "${codec}" extension "${extension}" mode "${mode}" container "${container}" targetdir "${targetdir}" completedir "${completedir}" auth_code "${auth_code}")"
+debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code
 
 # ========================================================================
 # Variable validation
-
 
 # -----
 # Detect which annoying version fo grep we have
@@ -202,7 +233,6 @@ normalize_whitespace() {
 # Main Transcode Loop
 for path
 do
-  log "Decoding ${path} with auth code ${auth_code}..."
 
   # Check for Presense of Audiobook.  Note this break the processing of 
   # of a list of books once a single missing file is found.
@@ -231,10 +261,16 @@ do
 
   mkdir -p "${output_directory}"
 
-  # Big long DEBUG output.  Fully describes the settings used for transcoding.  I could probably do this better.
+  # Fancy declartion of which book we are decoding.  Including the AUTHCODE.
+  dashline="----------------------------------------------------"
+  log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
+  log "Decoding ${path}"
+
+
+  # Big long DEBUG output.  Fully describes the settings used for transcoding.
   # Not this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %sn%-18s: %s' title "${title}" auth_code "${auth_code}" mode "${mode}" path "${path}" container ${container} codec "${codec}" bitrate "${bitrate}" artist "${artist}" album_artist "${album_artist}" album "${album}" album_date "${album_date}" genre "${genre}" copyright "${copyright}" full_file_path "${full_file_path}" metadata_file "${metadata_file}" working_directory "${working_directory}" )"
+  debug_vars "Book and Variable values" title auth_code mode path container codec bitrate artist album_artist album album_date genre copyright full_file_path metadata_file working_directory
 
   # -----
   # This is the main work horse command.  This is the primary transcoder.
@@ -284,8 +320,8 @@ do
           id3_version_param="-id3v2_version 3"
         fi
 
-        # Big Long chapter debug  I could probably do this better.
-        debug "$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' cover_path "${cover_path}" start "${start%?}" end "${end}" id3_version_param "${id3_version_param}" chapternum "${chapternum}" chapter_title "${chapter_title}" chapter_file "${chapter_file}" )"
+        # Big Long chapter debug
+        debug_vars "Chapter Variables:" cover_path start end id3_version_param chapternum chapter_title chapter_file
 
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
