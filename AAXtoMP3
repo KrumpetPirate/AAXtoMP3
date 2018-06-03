@@ -63,9 +63,43 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+set -o errexit -o noclobber -o nounset -o pipefail
+
+# ========================================================================
+# Utility Functions
+
+# -----
+# debug
+debug() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG ${1}"
+  fi
+}
+
+# -----
+# debug dump contents of a file to STDOUT
+debug_file() {
+  if [ $DEBUG == 1 ] ; then
+    echo "$(date "+%F %T%z") DEBUG"
+    echo "================================================================================"
+    cat "${1}"
+    echo "================================================================================"
+  fi
+}
+
+# -----
+# log
+log() {
+  echo "$(date "+%F %T%z") ${1}"
+}
+
+# -----
+# Print out what we have already after command line processing.
+debug "Command line options as set:$(printf '\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s\n%-18s: %s' codec "${codec}" extension "${extension}" mode "${mode}" container "${container}" targetdir "${targetdir}" completedir "${completedir}" auth_code "${auth_code}")"
+
 # ========================================================================
 # Variable validation
-set -o errexit -o noclobber -o nounset -o pipefail
+
 
 # -----
 # Detect which annoying version fo grep we have
@@ -126,34 +160,6 @@ if [[ "x${completedir}" != "x"  ]]; then
     exit 1 
   fi
 fi
-
-# ========================================================================
-# Utility Functions
-
-# -----
-# debug
-debug() {
-  if [ $DEBUG == 1 ] ; then
-    echo "$(date "+%F %T%z") DEBUG ${1}"
-  fi
-}
-
-# -----
-# debug dump contents of a file to STDOUT
-debug_file() {
-  if [ $DEBUG == 1 ] ; then
-    echo "$(date "+%F %T%z") DEBUG"
-    echo "================================================================================"
-    cat "${1}"
-    echo "================================================================================"
-  fi
-}
-
-# -----
-# log
-log() {
-  echo "$(date "+%F %T%z") ${1}"
-}
 
 # -----
 # Clean up if someone hits ^c
