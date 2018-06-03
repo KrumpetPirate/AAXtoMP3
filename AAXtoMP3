@@ -5,14 +5,15 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--output_dir <PATH>] {FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--output_dir <PATH>]\n[--complete_dir <PATH>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
-DEBUG=0                     # Default off, If set extremely verbose output.
+completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
+DEBUG=0                     # Default off, If set extremely verbose output.
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -22,33 +23,35 @@ container=mp3               # Just in case we need to change the container.  Use
 while true; do
   case "$1" in 
                       # Flac encoding
-    -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;    shift ;;        
+    -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;        
                       # Apple m4a music format.
-    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;      shift ;;        
+    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;        
                       # Ogg Format
-    -o | --opus       ) codec=libopus; extension=ogg; container=flac;               shift ;;        
+    -o | --opus       ) codec=libopus; extension=ogg; container=flac;                   shift ;;        
                       # If appropriate use only a single file output.
-    -s | --single     ) mode=single;                                                shift ;;        
+    -s | --single     ) mode=single;                                                    shift ;;        
                       # If appropriate use only a single file output.
-    -c | --chaptered  ) mode=chaptered;                                             shift ;;
+    -c | --chaptered  ) mode=chaptered;                                                 shift ;;
                       # This is the same as --single option.
-    -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3; shift ;;
+    -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
                       # Identical to --acc option.
-    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=m4a;      shift ;;
+    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
                       # Similiar to --aac but specific to audio books
-    -e:m4b            ) codec=copy; extension=m4a; mode=single; container=m4b;      shift ;;
+    -e:m4b            ) codec=copy; extension=m4a; mode=single; container=m4b;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
-    -t | --target_dir ) targetdir="$2";                                             shift 2 ;;      
+    -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;      
+                      # Move the AAX file to a new directory when decoding is complete.
+    -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
-    -A | --authcode   ) auth_code="$2";                                             shift 2 ;;      
+    -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;      
                       # Extremely verbose output.
-    -d | --debug      ) DEBUG=1;                                                    shift ;;        
+    -d | --debug      ) DEBUG=1;                                                        shift ;;        
                       # Command synopsis.
-    -h | --help       ) printf "$usage" $0 ;                                        exit ;;         
+    -h | --help       ) printf "$usage" $0 ;                                            exit ;;         
                       # Standard flag signifying the end of command line processing.
-    --                )                                                             shift; break ;; 
+    --                )                                                                 shift; break ;; 
                       # Anything else stops command line processing.
-    *                 )                                                             break ;;        
+    *                 )                                                                 break ;;        
 
   esac
 done
@@ -108,7 +111,17 @@ fi
 # Check the target dir for if set if it is writable
 if [[ "x${targetdir}" != "x"  ]]; then 
   if [[ ! -w "${targetdir}" || ! -d "${targetdir}" ]] ; then
-    echo "ERROR Target Directory is not writable: \"$targetdir\""
+    echo "ERROR Target Directory does not exist or is not writable: \"$targetdir\""
+    echo "$usage"
+    exit 1 
+  fi
+fi
+
+# -----
+# Check the target dir for if set if it is writable
+if [[ "x${completedir}" != "x"  ]]; then 
+  if [[ ! -w "${completedir}" || ! -d "${completedir}" ]] ; then
+    echo "ERROR Complete Directory does not exist or is not writable: \"$completedir\""
     echo "$usage"
     exit 1 
   fi
@@ -256,7 +269,6 @@ do
         # Chapter names are used in a few place.
         chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
         chapter_file="${output_directory}/${chapter_title}.${extension}"
-
                 
         # the ID3 tags must only be specified for *.mp3 files,
         # the other container formats come with their own
@@ -322,4 +334,12 @@ do
   log "Done ${title}"
   # Lastly get rid of any extra stuff.
   rm "${metadata_file}"
+
+  # Move the aax file if the decode is completed and the --complete_dir is set to a valid location.
+  # Check the target dir for if set if it is writable
+  if [[ "x${completedir}" != "x"  ]]; then 
+    log "Moving Transcoded ${path} to ${completedir}"
+    mv "${path}" "${completedir}"
+  fi
+
 done

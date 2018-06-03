@@ -28,7 +28,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
 ```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
@@ -39,6 +39,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
 * **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
+* **-C** or **--complete_dir &lt;PATH&gt;** a directory to place aax files after they have been decoded successfully. Note make a back up of your aax files prior to using this option. Just in case something goes wrong.
 * **-e:mp3**         Identical to defaults.
 * **-e:m4a**         Create a m4a audio file. This is identical to --aac
 * **-e:m4b**         Create a m4b aduio file. This is the book version of the m4a format. 
