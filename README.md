@@ -20,6 +20,7 @@ can obtain this string from a tool like [audible-activator](https://github.com/i
 ## Requirements
 * bash 4.3.42 or later tested
 * ffmpeg version 2.8.3 or later
+* ffplay (usually installed as a part of ffmpeg)
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
 
 ## OSX
