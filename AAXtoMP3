@@ -211,23 +211,19 @@ save_metadata() {
 
 # -----
 # Reach into the meta data and extract a specific value.
-#   Note the white space clean up could be well cleaner.
+#   This is a long pipe of transforms. 
+#   This finds the first occurance of the key : value pair.
 get_metadata_value() {
   local key
   key="$1"
-  normalize_whitespace "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
+        # Find the key in the meta data file                                  # Extract field value     # Remove the following /'s  "(Unabridged)  <blanks> at start end and multiples.
+  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | sed 's/[[:blank:]]\+/ /g')"
 }
 
 # -----
 # specific varient of get_metadata_value bitrate is important for transcoding.
 get_bitrate() {
   get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
-}
-
-# -----
-# simple function to turn tabs and multiple spaces into a single space.
-normalize_whitespace() {
-  echo $*
 }
 
 # ========================================================================
@@ -247,7 +243,7 @@ do
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
-  title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/  / /g' | sed 's/- /-/g' | xargs -0)
+  title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/- /-/g' | xargs -0)
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
@@ -302,7 +298,7 @@ do
     log "Extracting ${chaptercount} chapter files from ${output_file}..."
 
     chapternum=1
-    while read -r -u9 first _ _ start _ end
+    while read -r -u9 first _ _ chapter_start _ chapter_end
     do
       if [[ "${first}" = "Chapter" ]]; then
         read -r -u9 _
@@ -322,19 +318,19 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file start end id3_version_param chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
 
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
-        log "Spliting chapter ${chapternum} start:${start%?}(s) end:${end}(s)"
-        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
+        log "Spliting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
+        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         "${chapter_file}"
         
         # -----
         # OK lets get what need for the next chapter in the Playlist m3u file.
         # Playlist creation.        
-        duration=$(echo "${end} - ${start%?}" | bc)
+        duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
         echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
         echo "${chapter_title}.${container}" >> "${playlist_file}"
         chapternum=$((chapternum + 1 ))
@@ -373,8 +369,9 @@ do
     fi
   fi
 
-
-  log "Done ${title}"
+  # -----
+  # Announce that we have completed the transcode
+  log "Complete ${title}"
   # Lastly get rid of any extra stuff.
   rm "${metadata_file}"
 
