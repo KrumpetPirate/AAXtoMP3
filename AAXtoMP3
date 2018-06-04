@@ -63,6 +63,7 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+# Setup safer bash script defaults.
 set -o errexit -o noclobber -o nounset -o pipefail
 
 # ========================================================================
@@ -231,28 +232,28 @@ normalize_whitespace() {
 
 # ========================================================================
 # Main Transcode Loop
-for path
+for aax_file
 do
 
   # Check for Presense of Audiobook.  Note this break the processing of 
   # of a list of books once a single missing file is found.
-  if [[ ! -r "${path}" ]] ; then 
-    echo "ERROR: Input Audiobook file $path missing"
+  if [[ ! -r "${aax_file}" ]] ; then 
+    echo "ERROR: Input Audiobook file $aax_file missing"
     exit 1
   fi
 
   # -----
   # Make sure everything is a variable.  Simplifying Command interpretation
-  save_metadata "${path}"
+  save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
   title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/  / /g' | sed 's/- /-/g' | xargs -0)
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
-    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+    output_directory="$(dirname "${aax_file}")/${genre}/${artist}/${title}"
   fi
-  full_file_path="${output_directory}/${title}.${extension}"
+  output_file="${output_directory}/${title}.${extension}"
   bitrate="$(get_bitrate)k"
   album_artist="$(get_metadata_value album_artist)"
   album="$(get_metadata_value album)"
@@ -264,26 +265,26 @@ do
   # Fancy declartion of which book we are decoding.  Including the AUTHCODE.
   dashline="----------------------------------------------------"
   log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
-  log "Decoding ${path}"
+  log "Source ${aax_file}"
 
 
   # Big long DEBUG output.  Fully describes the settings used for transcoding.
   # Not this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode path container codec bitrate artist album_artist album album_date genre copyright full_file_path metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
 
   # -----
   # This is the main work horse command.  This is the primary transcoder.
   # This is the primary transcode. All the heavy lifting is here.
-  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${full_file_path}"
+  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"
 
-  log "Created ${full_file_path}."
+  log "Created ${output_file}."
   # -----
 
   # Grab the cover art if available.
-  cover_path="${output_directory}/cover.jpg"
-  log "Extracting cover into ${cover_path}..."
-  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"    
+  cover_file="${output_directory}/cover.jpg"
+  log "Extracting cover into ${cover_file}..."
+  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"    
 
   # -----
   # OK now spit the file if that's what you want.
@@ -298,7 +299,7 @@ do
 
     # Determine the number of chapters.
     chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-    log "Extracting ${chaptercount} chapter files from ${full_file_path}..."
+    log "Extracting ${chaptercount} chapter files from ${output_file}..."
 
     chapternum=1
     while read -r -u9 first _ _ start _ end
@@ -321,12 +322,12 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_path start end id3_version_param chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file start end id3_version_param chapternum chapter_title chapter_file
 
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
         log "Spliting chapter ${chapternum} start:${start%?}(s) end:${end}(s)"
-        </dev/null ffmpeg -loglevel quiet -nostats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
+        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         "${chapter_file}"
         
@@ -341,7 +342,7 @@ do
         # ----
         # Add the cover art to m4a and m4b file types.
         if [[ ${extension} == "m4a" && $(type -P mp4art) ]]; then
-          mp4art -q --add "${cover_path}" "${chapter_file}"
+          mp4art -q --add "${cover_file}" "${chapter_file}"
           log "Added cover art to ${chapter_title}"
         fi 
 
@@ -355,20 +356,20 @@ do
     done 9< "$metadata_file"
 
     # Clean up of working directoy stuff.
-    rm "${full_file_path}"
+    rm "${output_file}"
     log "Done creating chapters for ${output_directory}."
   else
     # Perform file tasks on output file.
     # ----
     # Add the cover art to m4a and m4b file types.
     if [[ ${extension} == "m4a" && $(type -P mp4art) ]]; then
-      mp4art -q --add "${cover_path}" "${full_file_path}"
+      mp4art -q --add "${cover_file}" "${output_file}"
       log "Added cover art to ${title}.${extension}"
     fi 
     # ----
     # Detect if we are actuall m4b instead of m4a Then rename the file.
     if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
-      mv "${full_file_path}" "${full_file_path/.m4a/.m4b}"
+      mv "${output_file}" "${output_file/.m4a/.m4b}"
     fi
   fi
 
@@ -381,7 +382,7 @@ do
   # Check the target dir for if set if it is writable
   if [[ "x${completedir}" != "x"  ]]; then 
     log "Moving Transcoded ${path} to ${completedir}"
-    mv "${path}" "${completedir}"
+    mv "${aax_file}" "${completedir}"
   fi
 
 done
