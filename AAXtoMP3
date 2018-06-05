@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--output_dir <PATH>]\n[--complete_dir <PATH>] {FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>]\n[--output_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
@@ -13,6 +13,7 @@ auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
 completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
+VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
 DEBUG=0                     # Default off, If set extremely verbose output.
 
 # -----
@@ -45,7 +46,9 @@ while true; do
                       # Authorization code associate with the AAX file(s)
     -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;      
                       # Extremely verbose output.
-    -d | --debug      ) DEBUG=1;                                                        shift ;;        
+    -d | --debug      ) DEBUG=1;                                                        shift ;;
+                      # Validate ONLY the aax file(s) No transcoding occures
+    -V | --validate   ) VALIDATE=1;                                                     shift ;;         
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;         
                       # Standard flag signifying the end of command line processing.
@@ -194,10 +197,61 @@ if [[ "x${completedir}" != "x"  ]]; then
 fi
 
 # -----
-# Clean up if someone hits ^c
+# Clean up if someone hits ^c or the script exits for any reason.
 trap 'rm -r -f "${working_directory}"' EXIT
+
+# -----
+# Set up some basic working files ASAP.  Note the trap will clean this up no matter what. 
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
+
+# -----
+# Validate the AAX and extract the metadata associated with the file.
+validate_aax() {
+  local media_file
+  media_file="$1"
+ 
+  # Test for existance
+  if [[ ! -r "${media_file}" ]] ; then
+    log "ERROR File NOT Found: ${media_file}"
+    return
+  else
+    if [[ "${VALIDATE}" == "1" ]]; then
+      log "Test 1 SUCCESS: ${media_file}"
+    fi
+  fi
+
+  # Clear the errexit value we want to capture the output of the ffprobe below.
+  set +e errexit
+
+  # Take a look at the aax file and see if it is valid.
+  output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
+
+  # If invalid then say something.
+  if [[ $? != "0" ]] ; then 
+    # No matter what lets bark that something is wrong.
+    log "ERROR: Invalid File: ${media_file}"
+  elif [[ "${VALIDATE}" == "1" ]]; then
+    # If the validate option is present then lets at least state what is valid.
+    log "Test 2 SUCCESS: ${media_file}"
+  fi 
+
+  # This is a big test only performed when the --validate swicth is passed.
+  if [[ "${VALIDATE}" == "1" ]]; then
+    output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
+    if [[ $? != "0" ]] ; then 
+      log "ERROR: Invalid File: ${media_file}"
+    else 
+      log "Test 3 SUCCESS: ${media_file}"
+    fi
+  fi
+
+  # Dump the output of the ffprobe command.
+  debug "$output"
+
+  # Turn it back on.  ffprobe is done.
+  set -e errexit
+}
 
 # -----
 # Inspect the AAX and extract the metadata associated with the file.
@@ -231,11 +285,14 @@ get_bitrate() {
 for aax_file
 do
 
-  # Check for Presense of Audiobook.  Note this break the processing of 
-  # of a list of books once a single missing file is found.
-  if [[ ! -r "${aax_file}" ]] ; then 
-    echo "ERROR: Input Audiobook file $aax_file missing"
-    exit 1
+  # Validate the input aax file.  Note this happens no matter what.
+  # It's just that if the validate option is set then we skip to next file.
+  # If however vlaidate is not set and we proceed with the script any errors will 
+  # case the script to stop.
+  validate_aax "${aax_file}"
+  if [[ ${VALIDATE} == "1" ]] ; then
+    # Don't bother doing anything else with this file.
+    continue
   fi
 
   # -----
@@ -263,7 +320,6 @@ do
   log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
   log "Source ${aax_file}"
 
-
   # Big long DEBUG output.  Fully describes the settings used for transcoding.
   # Not this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
@@ -272,6 +328,7 @@ do
   # -----
   # This is the main work horse command.  This is the primary transcoder.
   # This is the primary transcode. All the heavy lifting is here.
+  debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
   </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"
 
   log "Created ${output_file}."
@@ -378,7 +435,7 @@ do
   # Move the aax file if the decode is completed and the --complete_dir is set to a valid location.
   # Check the target dir for if set if it is writable
   if [[ "x${completedir}" != "x"  ]]; then 
-    log "Moving Transcoded ${path} to ${completedir}"
+    log "Moving Transcoded ${aax_file} to ${completedir}"
     mv "${aax_file}" "${completedir}"
   fi
 

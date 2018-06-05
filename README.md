@@ -28,7 +28,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
 ```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
@@ -40,6 +40,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
 * **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
 * **-C** or **--complete_dir &lt;PATH&gt;** a directory to place aax files after they have been decoded successfully. Note make a back up of your aax files prior to using this option. Just in case something goes wrong.
+* **-V** or **--validate** Perform 2 validation tests on the supplied aax files. This is more extensive than the normal validation as we attempt to transcode the aax file to a null file.  This can take a long period of time. However it is usefull when inspecting a large set of aax files prior to transcoding. As download errors are common with Audible servers.
 * **-e:mp3**         Identical to defaults.
 * **-e:m4a**         Create a m4a audio file. This is identical to --aac
 * **-e:m4b**         Create a m4b aduio file. This is the book version of the m4a format. 
@@ -62,7 +63,6 @@ In order of __precidence__.
 2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
 3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
 __Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occure.
-
 
 ### MP3 Encoding
 * This is the **default** encoding
@@ -89,13 +89,22 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * FLAC is an open format with royalty-free licensing
 * Note: There is an bug with the ffmpeg software that prevents the splitting of flac files. Chaptered output of flac files will fail.
 
-### M4A and M4B Containers ###
+### M4A and M4B Containers
 * These containers were created by Apple Inc. They were meant to be the successor to mp3.
 * M4A is a container that is meant to hold music and is typically of a higher bitrate.
 * M4B is a container that is meant to hold audiobooks and is typically has bitrates of 64k and 32k.
 * Both formats are chaptered
 * Both support coverart internall
 * The default mode is **single**
+
+### Validating AAX files
+* The **--validate** option will result in only a validation pass over the supplied aax file(s). No transcoding will occure. This is usefull when you wish to ensure you have a proper download of your personal Audible audio books. With this option all supplied books are validated.
+* If you do NOT supply the **--validate** option all audio books are still validated when they are processed. However if there is an invalid audio book in the supplied list of books the processing will stop at that point.
+* A third test is performed on the file where the entire file is inspected to see if it is valid. This is a lengthy process. However it will not break the script when an invalid file is found.
+* The 3 test current are:
+    1. aax present
+    1. meta data header in file is valid and complete
+    1. entire file is valid and complete.  _only executed with the **--validate** option._
 
 ### Defaults
 * Default out put directory is the base directoy of each file listed. Plus the genre, Artist and Title of the Audio Book.
