@@ -108,7 +108,7 @@ do
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
+    title=$(get_metadata_value title | sed 's/'\:'/'\ -'/g' | xargs -0)
     output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
