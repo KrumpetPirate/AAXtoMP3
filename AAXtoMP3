@@ -55,17 +55,18 @@ auth_code="";
 for dir in $authcodeDirs; do
 	codeFile="${dir}$authcode";
 
-	if [ ! -f "$codeFile" ]; then
-		auth_code=$1
-		shift
-		break;
-	elif [ -s "$codeFile" ]; then
-		auth_code=`head -1 "$codeFile"`
-		break;
-	else
-		echo "INFO: Sorry, empty \"$codeFile\" found, skipping.";
+	if [ ! -f "$codeFile" -o ! -s "$codeFile" ]; then
+		codeFile=""
+		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
 	fi;
 done;
+
+if [ ! -f "$codeFile" ]; then
+	auth_code=$1
+	shift
+else
+	auth_code=`head -1 "$codeFile"`
+fi
 
 if [ -z "$auth_code" ]; then
 	echo "INFO: Sorry, no authcode provided.";
