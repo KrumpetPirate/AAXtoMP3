@@ -55,17 +55,18 @@ auth_code="";
 for dir in $authcodeDirs; do
 	codeFile="${dir}$authcode";
 
-	if [ ! -f "$codeFile" ]; then
-		auth_code=$1
-		shift
-		break;
-	elif [ -s "$codeFile" ]; then
-		auth_code=`head -1 "$codeFile"`
-		break;
-	else
-		echo "INFO: Sorry, empty \"$codeFile\" found, skipping.";
+	if [ ! -f "$codeFile" -o ! -s "$codeFile" ]; then
+		codeFile=""
+		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
 	fi;
 done;
+
+if [ ! -f "$codeFile" ]; then
+	auth_code=$1
+	shift
+else
+	auth_code=`head -1 "$codeFile"`
+fi
 
 if [ -z "$auth_code" ]; then
 	echo "INFO: Sorry, no authcode provided.";
@@ -107,7 +108,7 @@ do
     save_metadata "${path}"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title | sed 's/'\:'/'-\ '/g' | xargs -0)
+    title=$(get_metadata_value title | sed 's/'\:'/'\ -'/g' | xargs -0)
     output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
