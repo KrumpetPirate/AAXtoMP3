@@ -7,6 +7,7 @@ extension=mp3
 mode=chaptered
 authcode=".authcode";
 auth="";
+
 if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
 authcodeDirs="${HOME}/ ./"
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
@@ -210,3 +211,4 @@ for path
 do
 	create_path "${path}" "${auth_code}"
 done
+exit 0;
