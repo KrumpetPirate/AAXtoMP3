@@ -17,9 +17,20 @@ if ! [[ $(type -P "$GREP") ]]; then
     exit 1
 fi
 
+if ! [[ $(type -P ffmpeg) ]]; then
+    echo "ffmpeg is not in your PATH"
+    echo "Without it, this script will break."
+    exit 1
+fi
+
+
 if [ "$#" -eq 0 ]; then
         echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] AUTHCODE {FILES}"
-        echo "	Note that order does matter!"
+        echo "Note that any optional flags have to be inputed in order to function correctly."
+        echo "[--flac]  : The flac codec is used in the resulting files. Default is MP3"
+        echo "[--aac]   : The aac codec is used in the resulting files. Default is MP3"
+        echo "[--opus]  : The opus codec is used in the resulting files. Default is MP3"
+        echo "[--single]: Prevents creation of chapters. Results in a single file."
         exit 1
 fi
 
