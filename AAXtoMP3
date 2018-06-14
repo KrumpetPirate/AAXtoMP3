@@ -112,25 +112,24 @@ normalize_whitespace() {
     echo $*
 }
 
-for path
-do
-    debug "Decoding ${path} with auth code ${auth_code}..."
+create_path(){
+    debug "Decoding $1 with auth code $2..."
 
-    save_metadata "${path}"
+    save_metadata "$1"
     genre=$(get_metadata_value genre)
     artist=$(get_metadata_value artist)
     title=$(get_metadata_value title | sed 's/'\:'/'\ -'/g' | xargs -0)
-    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+    output_directory="$(dirname "$1")/${genre}/${artist}/${title}"
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
 
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
+    </dev/null ffmpeg -loglevel error -stats -activation_bytes "$2" -i "$1" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
 
     debug "Created ${full_file_path}."
 
     cover_path="${output_directory}/cover.jpg"
     debug "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
+    </dev/null ffmpeg -loglevel error -activation_bytes "$2" -i "$1" -an -codec:v copy "${cover_path}"
 
     if [ "${mode}" == "chaptered" ]; then
         chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
@@ -166,4 +165,10 @@ do
 
     debug "Done."
     rm "${metadata_file}"
+}
+
+
+for path
+do
+	create_path "${path}" "${auth_code}"
 done
