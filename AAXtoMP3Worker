@@ -91,7 +91,7 @@ do
 	fi
 	
 	case "$var" in
-		-a=*|--auth=*) echo "found";
+		-a=*|--auth=*)
 		auth="${var#*=}";
 	esac
 done

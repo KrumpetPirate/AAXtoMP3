@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+
+set -o errexit -o noclobber -o nounset -o pipefail
+
+codec=libmp3lame
+extension=mp3
+mode=chaptered
+flac=""
+aac=""
+opus=""
+single=""
+
+authcode=".authcode";
+auth="";
+multi_thread="";
+multi_thread_count=4;
+
+
+if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
+authcodeDirs="${HOME}/ ./"
+GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+
+if ! [[ $(type -P "$GREP") ]]; then
+    echo "$GREP (GNU grep) is not in your PATH"
+    echo "Without it, this script will break."
+    echo "On macOS, you may want to try: brew install grep"
+    exit 1
+fi
+
+if ! [[ $(type -P ffmpeg) ]]; then
+    echo "ffmpeg is not in your PATH"
+    echo "Without it, this script will break."
+    exit 1
+fi
+
+function print_manual(){
+    echo ""
+	echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] --auth=AUTHCODE {FILES}"
+    echo "	Note that when you enter conflicting parameters, the last one in the list at the bottom will be the one used. This means, opus wins over flac and aac, and so on."
+    echo "	You HAVE to use the equals-sign. You may also use -a=AUTHCODE. But the '=' is mandatory."
+    echo "	Everything after the authcode must be a filename to a file which you want to convert"
+    echo ""
+    echo "		[--flac]: The flac codec is used in the resulting files. Default is MP3"
+    echo "		[--aac]: The aac codec is used in the resulting files. Default is MP3"
+    echo "		[--opus]: The opus codec is used in the resulting files. Default is MP3"
+    echo "		[--single] : Prevents creation of chapters. Results in a single file."
+    echo "		--authcode=XXXXXXXX: Your personal autcode. Everything after this parameter will be used as an inputfile!"
+    echo "		{FILES}: Files to convert, seperated by spaces."
+    echo ""
+}
+
+
+if [ "$#" -eq 0 ]; then
+	print_manual
+    exit 1
+fi
+
+
+if [[ "$1" = '-h' ]]; then
+	print_manual
+    exit 1
+fi
+if [[ "$1" = '--help' ]]; then
+	print_manual
+    exit 1
+fi
+
+
+#Iterate over the parameter to find all entered ones
+for var in "$@"
+do
+    
+	if [[ "$var" = '--flac' ]]
+	then
+		flac='--flac'
+		shift
+	fi
+
+	if [[ "$var" == '--aac' ]]
+	then
+		aac='--aac'
+		single='--single'
+		shift
+	fi
+
+	if [[ "$var" = '--opus' ]]
+	then
+		opus='--opus'
+		shift
+	fi
+	
+	if [[ "$var" == '--single' ]]
+	then
+		single='--single'
+		shift
+	fi
+	
+	case "$var" in
+		-a=*|--auth=*)
+		auth="${var#*=}";
+	esac
+done
+
+
+auth_code="";
+for dir in $authcodeDirs; do
+	codeFile="${dir}$authcode";
+
+	if [ ! -f "$codeFile" -o ! -s "$codeFile" ]; then
+		codeFile=""
+		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
+	fi;
+done;
+
+if [ ! -f "$codeFile" ]; then
+	auth_code=$1
+	shift
+else
+	auth_code=`head -1 "$codeFile"`
+fi
+
+if [ -z "$auth_code" ]; then
+	auth_code="$auth";
+fi;
+
+if [ -z "$auth_code" ]; then
+	echo "INFO: Sorry, no authcode provided.";
+	exit 1;
+fi;
+
+debug() {
+    echo "$(date "+%F %T%z") ${1}"
+}
+
+trap 'rm -r -f "${working_directory}"' EXIT
+working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
+metadata_file="${working_directory}/metadata.txt"
+
+
+
+#If multithread is not set, use default processing.
+#if [ -z "$multi_thread" ]; then
+	for path
+		do
+			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "${path}" "--auth=${auth_code}"
+		done
+	exit 0;
+#fi;
+
+
+
+
+
+#
+#export -f create_path 
+#usedThreads=0;
+#remainingTasks=10;
+#
+##The max thread number needs to be set. Default is 4.
+##While not all workers are used, create a new worker.
+#while [ $usedThreads -lt $multi_thread_count]
+#do
+#	#Check if there is a task a worker could work on.
+#	#If there are less task than free workers, reduce max workers by one.
+#	#If every task is done, this number should be zero and the program quits.
+#	if [ $multi_thread -lt  $remainingTasks]; then
+#		echo ""
+#		multi_thread_count=$((multi_thread_count-1))
+#	else
+#		nohup bash -c background &
+#		pidof(create_path "${path}" "${auth_code}")
+#		usedThreads=$((usedThreads+1))
+#	fi
+#	
+#	
+#done
+#
