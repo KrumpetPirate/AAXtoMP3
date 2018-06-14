@@ -12,6 +12,7 @@ single=""
 
 authcode=".authcode";
 auth="";
+allfromfolder="";
 multi_thread="";
 multi_thread_count=4;
 
@@ -48,6 +49,7 @@ function print_manual(){
     echo "		[--multithreading] : Enables Multitrheading. Uses 4 cores. Please use --threads=NUMBER if you dont have 4 cores."
     echo "		[--threads=NUMBER] : Sets the number of cores used. Enables Multithreading"
     echo "		--authcode=XXXXXXXX: Your personal autcode. Everything after this parameter will be used as an inputfile!"
+    echo "		[--all] : Processes all .aax files from the current working directory. Ignores (FILES)."
     echo "		{FILES}: Files to convert, seperated by spaces."
     echo ""
 }
@@ -97,6 +99,13 @@ do
 		single='--single '
 		shift
 	fi
+	
+	if [[ "$var" == '--all' ]]
+	then
+		allfromfolder='true'
+		shift
+	fi
+	
 	
 	case "$var" in
 		-a=*|--auth=*)
@@ -148,14 +157,36 @@ working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
 
+
+# find all aax-files and store them
+FileArray=()
+j=0;
+for i in * ; do
+  case $i in *.aax)
+	j=$((j+1))
+	FileArray+=("$i")
+	echo "Found file: $i"
+  esac
+done
+
+
 #If multithread is not set, use default processing.
 if [ -z "$multi_thread" ]; then
 	echo "Using a single thread!"
+	
+	if [ -n "$allfromfolder" ]
+	then
+		for file in "${FileArray[@]}"
+			do
+				bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "$file" 
+			done
+		exit 0
+	fi
+	
+	
 	for path
 		do
-			#echo bash AAXtoMP3Worker "${flac}""${aac}""${opus}""${single}""--auth=${auth_code}" "${path}" 
 			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "${path}" 
-			#echo "running away..."
 		done
 	exit 0;
 fi;
@@ -165,16 +196,27 @@ fi;
 #Count Tasks
 i=0;
 PidArray=()
-for var in "$@"
-do
-	i=$((i+1))
-done
+
+if [ -n "$allfromfolder" ]
+		then
+			for file in "${FileArray[@]}"
+			do
+				i=$((i+1))
+			done
+		else
+			for var in "$@"
+			do
+				i=$((i+1))
+			done
+		fi
+
+
 echo "$i tasks to do"
 
 usedThreads=0;
 processes_left=1;
 remainingTasks=$i;
-
+executedTasks=0;
 
 if ! [ -d log ]
 then
@@ -194,10 +236,20 @@ do
 	if [ "$usedThreads" -lt  "$multi_thread_count" -a "$remainingTasks" -gt "0" ]
 	then
 		#While Tread available, assign task
-		path="$1";
+		
+		if [ -n "$allfromfolder" ]
+		then
+			path="${FileArray[$executedTasks]}"
+		executedTasks=$((executedTasks+1))
+		else
+			path="$1";
+			shift
+		fi
+		
 		echo bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path" 
 		nohup bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path"  &>> log/"$path".log &
-		shift
+		
+	
 		#echo "new task with id: $!"
 		PidArray+=("$!")
 		usedThreads=$((usedThreads+1))
