@@ -72,32 +72,33 @@ do
     
 	if [[ "$var" = '--flac' ]]
 	then
-		flac='--flac'
+		flac='--flac '
 		shift
 	fi
 
 	if [[ "$var" == '--aac' ]]
 	then
 		aac='--aac'
-		single='--single'
+		single='--single '
 		shift
 	fi
 
 	if [[ "$var" = '--opus' ]]
 	then
-		opus='--opus'
+		opus='--opus '
 		shift
 	fi
 	
 	if [[ "$var" == '--single' ]]
 	then
-		single='--single'
+		single='--single '
 		shift
 	fi
 	
 	case "$var" in
 		-a=*|--auth=*)
-		auth="${var#*=}";
+		auth=$(echo $var | cut -d '=' -f 2)
+		shift
 	esac
 done
 
@@ -111,13 +112,6 @@ for dir in $authcodeDirs; do
 		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
 	fi;
 done;
-
-if [ ! -f "$codeFile" ]; then
-	auth_code=$1
-	shift
-else
-	auth_code=`head -1 "$codeFile"`
-fi
 
 if [ -z "$auth_code" ]; then
 	auth_code="$auth";
@@ -142,7 +136,9 @@ metadata_file="${working_directory}/metadata.txt"
 #if [ -z "$multi_thread" ]; then
 	for path
 		do
-			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "${path}" "--auth=${auth_code}"
+			echo bash AAXtoMP3Worker "${flac}""${aac}""${opus}""${single}""--auth=${auth_code}" "${path}" 
+			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "${path}" 
+			echo "running away..."
 		done
 	exit 0;
 #fi;
