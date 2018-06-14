@@ -35,7 +35,8 @@ fi
 
 function print_manual(){
     echo ""
-	echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] --auth=AUTHCODE {FILES}"
+    echo "This is the multithreaded Version of the AAXtoMP3-Tool. It can process multiple files at once."
+	echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--threads=NUMBER] --auth=AUTHCODE {FILES}"
     echo "	Note that when you enter conflicting parameters, the last one in the list at the bottom will be the one used. This means, opus wins over flac and aac, and so on."
     echo "	You HAVE to use the equals-sign. You may also use -a=AUTHCODE. But the '=' is mandatory."
     echo "	Everything after the authcode must be a filename to a file which you want to convert"
@@ -44,6 +45,8 @@ function print_manual(){
     echo "		[--aac]: The aac codec is used in the resulting files. Default is MP3"
     echo "		[--opus]: The opus codec is used in the resulting files. Default is MP3"
     echo "		[--single] : Prevents creation of chapters. Results in a single file."
+    echo "		[--multithreading] : Enables Multitrheading. Uses 4 cores. Please use --threads=NUMBER if you dont have 4 cores."
+    echo "		[--threads=NUMBER] : Sets the number of cores used. Enables Multithreading"
     echo "		--authcode=XXXXXXXX: Your personal autcode. Everything after this parameter will be used as an inputfile!"
     echo "		{FILES}: Files to convert, seperated by spaces."
     echo ""
@@ -100,6 +103,20 @@ do
 		auth=$(echo $var | cut -d '=' -f 2)
 		shift
 	esac
+	
+	case "$var" in
+		-t=*|--threads=*)
+		multi_thread_count=$(echo $var | cut -d '=' -f 2)
+		multi_thread="1"
+		shift
+	esac
+	
+	if [[ "$var" == '--multithreading' ]]
+	then
+		multi_thread="1"
+		shift
+	fi
+
 done
 
 
@@ -131,43 +148,94 @@ working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
 
-
 #If multithread is not set, use default processing.
-#if [ -z "$multi_thread" ]; then
+if [ -z "$multi_thread" ]; then
+	echo "Using a single thread!"
 	for path
 		do
-			echo bash AAXtoMP3Worker "${flac}""${aac}""${opus}""${single}""--auth=${auth_code}" "${path}" 
+			#echo bash AAXtoMP3Worker "${flac}""${aac}""${opus}""${single}""--auth=${auth_code}" "${path}" 
 			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "${path}" 
-			echo "running away..."
+			#echo "running away..."
 		done
 	exit 0;
-#fi;
+fi;
 
 
 
+#Count Tasks
+i=0;
+PidArray=()
+for var in "$@"
+do
+	i=$((i+1))
+done
+echo "$i tasks to do"
+
+usedThreads=0;
+processes_left=1;
+remainingTasks=$i;
 
 
-#
-#export -f create_path 
-#usedThreads=0;
-#remainingTasks=10;
-#
-##The max thread number needs to be set. Default is 4.
-##While not all workers are used, create a new worker.
-#while [ $usedThreads -lt $multi_thread_count]
-#do
-#	#Check if there is a task a worker could work on.
-#	#If there are less task than free workers, reduce max workers by one.
-#	#If every task is done, this number should be zero and the program quits.
-#	if [ $multi_thread -lt  $remainingTasks]; then
-#		echo ""
-#		multi_thread_count=$((multi_thread_count-1))
-#	else
-#		nohup bash -c background &
-#		pidof(create_path "${path}" "${auth_code}")
-#		usedThreads=$((usedThreads+1))
-#	fi
-#	
-#	
-#done
-#
+if ! [ -d log ]
+then
+	mkdir log
+fi
+
+
+#The max thread number needs to be set. Default is 4.
+#While not all workers are used, create a new worker.
+#while [ "$usedThreads" -lt "$multi_thread_count" ]
+echo "Using $multi_thread_count threads!"
+while [ "$remainingTasks" -gt "0" -o "$processes_left" -eq "1" ]
+do
+	
+	
+	#when a thread is available, assign task. If not, check the others.
+	if [ "$usedThreads" -lt  "$multi_thread_count" -a "$remainingTasks" -gt "0" ]
+	then
+		#While Tread available, assign task
+		path="$1";
+		echo bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path" 
+		nohup bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path"  &>> log/"$path".log &
+		shift
+		#echo "new task with id: $!"
+		PidArray+=("$!")
+		usedThreads=$((usedThreads+1))
+		remainingTasks=$((remainingTasks-1))
+		
+	fi
+
+	#validate if every task is still running
+		count_still_running=0;
+		for i in "${PidArray[@]}"
+		do
+			
+			if [ -z "${i}" ]
+			then
+				continue
+			fi
+						
+			
+			if [ -d "/proc/${i}" ]
+			then
+				#echo "${i} process is running"
+				count_still_running=$((count_still_running+1))
+			else
+				#echo "${i} process has stopped"
+				delete="${i}"
+				PidArray=("${PidArray[@]/$delete}")
+				usedThreads=$((usedThreads-1))
+			fi
+		done
+		
+		if [ "$count_still_running" -eq  "0" ]
+		then
+			echo "all worker have stopped."
+			processes_left=0
+		else
+			echo "$count_still_running Jobs are still running."
+		fi
+	
+	#pause execution for 2 seconds, and then check again
+	sleep 2
+done
