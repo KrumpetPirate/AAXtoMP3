@@ -12,8 +12,7 @@ GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [ -x "$(command -v ffmpeg)" ]
 then
-	echo "Please make sure that ffplay is installed and in your PATH."
-	echo "This is usually installed as a part of the ffmpeg package."
+	echo "Please make sure that ffmpeg is installed and in your PATH."
 	exit 1
 fi
 
