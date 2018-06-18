@@ -132,7 +132,7 @@ do
             then
                 read -r -u9 _
                 read -r -u9 _ _ chapter
-                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
+                chapter_title="${title} - ${chapter}"
                 chapter_file="${output_directory}/${chapter_title}.${extension}"
 
                 # the ID3 tags must only be specified for *.mp3 files,
