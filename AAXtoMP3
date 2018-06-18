@@ -143,7 +143,7 @@ do
                    id3_version_param="-id3v2_version 3"
                 fi
 
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
+                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -vn -acodec copy ${id3_version_param} \
                     -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
                     "${chapter_file}"
                 chapternum=$((chapternum + 1 ))
