@@ -405,7 +405,7 @@ do
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
         log "Spliting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
+        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         "${chapter_file}"
         
