@@ -147,6 +147,31 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 # -----
+# Detect ffmpeg and ffprobe
+if [[ "x$(type -P ffmpeg)" == "x" ]]; then
+  echo "ERROR ffmpeg was not found on your env PATH variable"
+  echo "Without it, this script will break."
+  echo "INSTALL:" 
+  echo "MacOS:   brew install ffmpeg"
+  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265"
+  echo "RHEL:    yum install ffmpeg"
+  exit 1
+fi 
+
+# -----
+# Detect ffmpeg and ffprobe
+if [[ "x$(type -P ffprobe)" == "x" ]]; then
+  echo "ERROR ffprobe was not found on your env PATH variable"
+  echo "Without it, this script will break."
+  echo "INSTALL:" 
+  echo "MacOS:   brew install ffmpeg"
+  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265"
+  echo "RHEL:    yum install ffmpeg"
+  exit 1
+fi 
+
+
+# -----
 # Detect if we need mp4art for cover additions to m4a & m4b files.
 if [[ "x${extension}" == "xm4a" && "x$(type -P mp4art)" == "x" ]]; then
   echo "WARN mp4art was not found on your env PATH variable"

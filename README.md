@@ -110,6 +110,43 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * Default out put directory is the base directoy of each file listed. Plus the genre, Artist and Title of the Audio Book.
 * The default codec is mp3
 * The default output is by chapter.
+
+### Installing Dependencies.
+#### FFMPEG,FFPROBE
+__Ubuntu, Linux Mint, Debian__
+```
+sudo apt-get update
+sudo apt-get install ffmpeg libav-tools x264 x265
+```
+__CentOS, RHEL & Fedora__
+```
+# CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
+yum install ffmpeg
+
+```
+__MacOS__
+```
+brew install ffmpeg
+```
+
+#### mp4art
+_Note: This is an optional dependency._
+
+__Ubuntu, Linux Mint, Debian__
+```
+sudo apt-get update
+sudo apt-get install mp4v2-utils
+```
+__CentOS, RHEL & Fedora__
+```
+# CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
+yum install mp4v2-utils
+
+```
+__MacOS__
+```
+brew install mp4v2
+```
  
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
