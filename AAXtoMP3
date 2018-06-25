@@ -210,28 +210,6 @@ if [[ "x${targetdir}" != "x"  ]]; then
     exit 1 
   fi
 fi
-=======
-auth_code="";
-for dir in $authcodeDirs; do
-	codeFile="${dir}$authcode";
-
-	if [ ! -f "$codeFile" -o ! -s "$codeFile" ]; then
-		codeFile=""
-		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
-	fi;
-done;
-
-if [ ! -f "$codeFile" ]; then
-	auth_code=$1
-	shift
-else
-	auth_code=`head -1 "$codeFile"`
-fi
-
-if [ -z "$auth_code" ]; then
-	echo "INFO: Sorry, no authcode provided.";
-	exit 1;
-fi;
 
 # -----
 # Check the target dir for if set if it is writable
@@ -470,55 +448,6 @@ do
     # Detect if we are actuall m4b instead of m4a Then rename the file.
     if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
       mv "${output_file}" "${output_file/.m4a/.m4b}"
-=======
-    debug "Decoding ${path} with auth code ${auth_code}..."
-
-    save_metadata "${path}"
-    genre=$(get_metadata_value genre)
-    artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title | sed 's/'\:'/'\ -'/g' | xargs -0)
-    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
-    mkdir -p "${output_directory}"
-    full_file_path="${output_directory}/${title}.${extension}"
-
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
-
-    debug "Created ${full_file_path}."
-
-    cover_path="${output_directory}/cover.jpg"
-    debug "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
-
-    if [ "${mode}" == "chaptered" ]; then
-        chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-        debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
-
-        chapternum=1
-        while read -r -u9 first _ _ start _ end
-        do
-            if [[ "${first}" = "Chapter" ]]
-            then
-                read -r -u9 _
-                read -r -u9 _ _ chapter
-                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
-                chapter_file="${output_directory}/${chapter_title}.${extension}"
-
-                # the ID3 tags must only be specified for *.mp3 files,
-                # the other container formats come with their own
-                # tagging mechanisms.
-                id3_version_param=""
-                if test "${extension}" = "mp3"; then
-                   id3_version_param="-id3v2_version 3"
-                fi
-
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
-                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-                    "${chapter_file}"
-                chapternum=$((chapternum + 1 ))
-            fi
-        done 9< "$metadata_file"
-        rm "${full_file_path}"
-        debug "Done creating chapters. Chaptered files contained in ${output_directory}."
     fi
   fi
 
