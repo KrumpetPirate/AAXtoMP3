@@ -118,12 +118,36 @@ __Ubuntu, Linux Mint, Debian__
 sudo apt-get update
 sudo apt-get install ffmpeg libav-tools x264 x265
 ```
-__CentOS, RHEL & Fedora__
-```
-# CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
-yum install ffmpeg
 
+__Fedora__
+
+Fedora users need to enable the rpm fusion repository to install ffmpeg. Version 22 and upwards are currently supported. The following command works independent of your current version:
 ```
+sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+```
+Afterwards use the package manager to install ffmpeg:
+```
+sudo dnf install ffmpeg
+```
+
+__RHEL or compatible like CentOS__
+
+RHEL version 6 and 7 are currently able to use rpm fusion.
+In order to use rpm fusion you have to enable EPEL, see http://fedoraproject.org/wiki/EPEL
+
+Add the rpm fusion repositories in version 6
+```
+sudo yum localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-6.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-6.noarch.rpm
+```
+or version 7:
+```
+sudo yum localinstall --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-7.noarch.rpm
+```
+then install ffmpeg:
+```
+sudo yum install ffmpeg
+```
+
 __MacOS__
 ```
 brew install ffmpeg
