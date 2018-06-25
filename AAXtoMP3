@@ -218,6 +218,8 @@ for dir in $authcodeDirs; do
 	if [ ! -f "$codeFile" -o ! -s "$codeFile" ]; then
 		codeFile=""
 		echo "INFO: Sorry, missing or empty \"$codeFile\" found, skipping.";
+	else
+		break
 	fi;
 done;
 
