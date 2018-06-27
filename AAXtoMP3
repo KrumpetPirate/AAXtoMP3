@@ -5,7 +5,18 @@ set -o errexit -o noclobber -o nounset -o pipefail
 codec=libmp3lame
 extension=mp3
 mode=chaptered
+flac=""
+aac=""
+opus=""
+single=""
+
 authcode=".authcode";
+auth="";
+allfromfolder="";
+multi_thread="";
+multi_thread_count=4;
+
+
 if [ -z ${HOME+x} ] && ! [ -z ${USERPROFILE+x} ]; then HOME="$USERPROFILE"; fi
 authcodeDirs="${HOME}/ ./"
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
@@ -17,39 +28,106 @@ if ! [[ $(type -P "$GREP") ]]; then
     exit 1
 fi
 
+if ! [[ $(type -P ffmpeg) ]]; then
+    echo "ffmpeg is not in your PATH"
+    echo "Without it, this script will break."
+    exit 1
+fi
+
+function print_manual(){
+    echo ""
+    echo "This is the multithreaded Version of the AAXtoMP3-Tool. It can process multiple files at once."
+	echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--threads=NUMBER] --auth=AUTHCODE {FILES}"
+    echo "	Note that when you enter conflicting parameters, the last one in the list at the bottom will be the one used. This means, opus wins over flac and aac, and so on."
+    echo "	You HAVE to use the equals-sign. You may also use -a=AUTHCODE. But the '=' is mandatory."
+    echo "	Everything after the authcode must be a filename to a file which you want to convert"
+    echo ""
+    echo "		[--flac]: The flac codec is used in the resulting files. Default is MP3"
+    echo "		[--aac]: The aac codec is used in the resulting files. Default is MP3"
+    echo "		[--opus]: The opus codec is used in the resulting files. Default is MP3"
+    echo "		[--single] : Prevents creation of chapters. Results in a single file."
+    echo "		[--multithreading] : Enables Multitrheading. Uses 4 cores. Please use --threads=NUMBER if you dont have 4 cores."
+    echo "		[--threads=NUMBER] : Sets the number of cores used. Enables Multithreading"
+    echo "		--authcode=XXXXXXXX: Your personal autcode. Everything after this parameter will be used as an inputfile!"
+    echo "		[--all] : Processes all .aax files from the current working directory. Ignores (FILES)."
+    echo "		{FILES}: Files to convert, seperated by spaces."
+    echo ""
+}
+
+
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3 [--flac] [--aac] [--opus ] [--single] AUTHCODE {FILES}"
-        echo "	Note that order does matter!"
-        exit 1
+	print_manual
+    exit 1
 fi
 
-if [[ "$1" = '--flac' ]]
-then
-    codec=flac
-    extension=flac
-    shift
+
+if [[ "$1" = '-h' ]]; then
+	print_manual
+    exit 1
+fi
+if [[ "$1" = '--help' ]]; then
+	print_manual
+    exit 1
 fi
 
-if [[ "$1" == '--aac' ]]
-then
-    codec=copy
-    extension=m4a
-    mode=single
-    shift
-fi
 
-if [[ "$1" = '--opus' ]]
-then
-    codec=libopus
-    extension=ogg
-    shift
-fi
+#Iterate over the parameter to find all entered ones
+for var in "$@"
+do
+    
+	if [[ "$var" = '--flac' ]]
+	then
+		flac='--flac '
+		shift
+	fi
 
-if [[ "$1" == '--single' ]]
-then
-    mode=single
-    shift
-fi
+	if [[ "$var" == '--aac' ]]
+	then
+		aac='--aac'
+		single='--single '
+		shift
+	fi
+
+	if [[ "$var" = '--opus' ]]
+	then
+		opus='--opus '
+		shift
+	fi
+	
+	if [[ "$var" == '--single' ]]
+	then
+		single='--single '
+		shift
+	fi
+	
+	if [[ "$var" == '--all' ]]
+	then
+		allfromfolder='true'
+		shift
+	fi
+	
+	
+	case "$var" in
+		-a=*|--auth=*)
+		auth=$(echo $var | cut -d '=' -f 2)
+		shift
+	esac
+	
+	case "$var" in
+		-t=*|--threads=*)
+		multi_thread_count=$(echo $var | cut -d '=' -f 2)
+		multi_thread="1"
+		shift
+	esac
+	
+	if [[ "$var" == '--multithreading' ]]
+	then
+		multi_thread="1"
+		shift
+	fi
+
+done
+
 
 auth_code="";
 for dir in $authcodeDirs; do
@@ -61,12 +139,9 @@ for dir in $authcodeDirs; do
 	fi;
 done;
 
-if [ ! -f "$codeFile" ]; then
-	auth_code=$1
-	shift
-else
-	auth_code=`head -1 "$codeFile"`
-fi
+if [ -z "$auth_code" ]; then
+	auth_code="$auth";
+fi;
 
 if [ -z "$auth_code" ]; then
 	echo "INFO: Sorry, no authcode provided.";
@@ -81,78 +156,138 @@ trap 'rm -r -f "${working_directory}"' EXIT
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
-save_metadata() {
-    local media_file
-    media_file="$1"
-    ffprobe -i "$media_file" 2> "$metadata_file"
-}
 
-get_metadata_value() {
-    local key
-    key="$1"
-    normalize_whitespace "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//' | tr -s '[:blank:]' ' ')"
-}
 
-get_bitrate() {
-    get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
-}
+# find all aax-files and store them
+FileArray=()
+j=0;
+for i in * ; do
+  case $i in *.aax)
+	j=$((j+1))
+	FileArray+=("$i")
+	echo "Found file: $i"
+  esac
+done
 
-normalize_whitespace() {
-    echo $*
-}
 
-for path
+#If multithread is not set, use default processing.
+if [ -z "$multi_thread" ]; then
+	echo "Using a single thread!"
+	
+	if [ -n "$allfromfolder" ]
+	then
+		for file in "${FileArray[@]}"
+			do
+				bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "$file" 
+			done
+		exit 0
+	fi
+	
+	
+	for path
+		do
+			bash AAXtoMP3Worker "${flac}" "${aac}" "${opus}" "${single}" "--auth=${auth_code}" "${path}" 
+		done
+	exit 0;
+fi;
+
+
+
+#Count Tasks
+i=0;
+PidArray=()
+
+if [ -n "$allfromfolder" ]
+		then
+			for file in "${FileArray[@]}"
+			do
+				i=$((i+1))
+			done
+		else
+			for var in "$@"
+			do
+				i=$((i+1))
+			done
+		fi
+
+
+echo "$i tasks to do"
+
+usedThreads=0;
+processes_left=1;
+remainingTasks=$i;
+executedTasks=0;
+
+if ! [ -d log ]
+then
+	mkdir log
+fi
+
+
+#The max thread number needs to be set. Default is 4.
+#While not all workers are used, create a new worker.
+#while [ "$usedThreads" -lt "$multi_thread_count" ]
+echo "Using $multi_thread_count threads!"
+while [ "$remainingTasks" -gt "0" -o "$processes_left" -eq "1" ]
 do
-    debug "Decoding ${path} with auth code ${auth_code}..."
+	
+	
+	#when a thread is available, assign task. If not, check the others.
+	if [ "$usedThreads" -lt  "$multi_thread_count" -a "$remainingTasks" -gt "0" ]
+	then
+		#While Tread available, assign task
+		
+		if [ -n "$allfromfolder" ]
+		then
+			path="${FileArray[$executedTasks]}"
+		executedTasks=$((executedTasks+1))
+		else
+			path="$1";
+			shift
+		fi
+		
+		echo bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path" 
+		nohup bash AAXtoMP3Worker "$flac" "$aac" "$opus" "$single" "--auth=$auth_code" "$path"  &>> log/"$path".log &
+		
+	
+		#echo "new task with id: $!"
+		PidArray+=("$!")
+		usedThreads=$((usedThreads+1))
+		remainingTasks=$((remainingTasks-1))
+		
+	fi
 
-    save_metadata "${path}"
-    genre=$(get_metadata_value genre)
-    artist=$(get_metadata_value artist)
-    title=$(get_metadata_value title | sed 's/'\:'/'\ -'/g' | xargs -0)
-    output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
-    mkdir -p "${output_directory}"
-    full_file_path="${output_directory}/${title}.${extension}"
-
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${path}" -vn -codec:a "${codec}" -ab "$(get_bitrate)k" -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="$(get_metadata_value album_artist)" -metadata album="$(get_metadata_value album)" -metadata date="$(get_metadata_value date)" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="$(get_metadata_value copyright)" "${full_file_path}"
-
-    debug "Created ${full_file_path}."
-
-    cover_path="${output_directory}/cover.jpg"
-    debug "Extracting cover into ${cover_path}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${path}" -an -codec:v copy "${cover_path}"
-
-    if [ "${mode}" == "chaptered" ]; then
-        chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-        debug "Extracting ${chaptercount} chapter files from ${full_file_path}..."
-
-        chapternum=1
-        while read -r -u9 first _ _ start _ end
-        do
-            if [[ "${first}" = "Chapter" ]]
-            then
-                read -r -u9 _
-                read -r -u9 _ _ chapter
-                chapter_title="${title} - $(printf %0${#chaptercount}d $chapternum) ${chapter}"
-                chapter_file="${output_directory}/${chapter_title}.${extension}"
-
-                # the ID3 tags must only be specified for *.mp3 files,
-                # the other container formats come with their own
-                # tagging mechanisms.
-                id3_version_param=""
-                if test "${extension}" = "mp3"; then
-                   id3_version_param="-id3v2_version 3"
-                fi
-
-                </dev/null ffmpeg -loglevel error -stats -i "${full_file_path}" -i "${cover_path}" -ss "${start%?}" -to "${end}" -map 0:0 -map 1:0 -acodec copy ${id3_version_param} \
-                    -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-                    "${chapter_file}"
-                chapternum=$((chapternum + 1 ))
-            fi
-        done 9< "$metadata_file"
-        rm "${full_file_path}"
-        debug "Done creating chapters. Chaptered files contained in ${output_directory}."
-    fi
-
-    debug "Done."
-    rm "${metadata_file}"
+	#validate if every task is still running
+		count_still_running=0;
+		for i in "${PidArray[@]}"
+		do
+			
+			if [ -z "${i}" ]
+			then
+				continue
+			fi
+						
+			
+			if [ -d "/proc/${i}" ]
+			then
+				#echo "${i} process is running"
+				count_still_running=$((count_still_running+1))
+			else
+				#echo "${i} process has stopped"
+				delete="${i}"
+				PidArray=("${PidArray[@]/$delete}")
+				usedThreads=$((usedThreads-1))
+			fi
+		done
+		
+		if [ "$count_still_running" -eq  "0" ]
+		then
+			echo "all worker have stopped."
+			processes_left=0
+		else
+			echo "$count_still_running Jobs are still running."
+		fi
+	
+	#pause execution for 2 seconds, and then check again
+	sleep 2
 done
