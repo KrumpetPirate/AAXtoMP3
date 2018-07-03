@@ -147,6 +147,16 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 # -----
+# Detect which annoying version of sed we have
+SED=$(sed --version 2>&1 | $GREP -q GNU && echo "sed" || echo "gsed")
+if ! [[ $(type -P "$SED") ]]; then
+  echo "$SED (GNU sed) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install gnu-sed"
+  exit 1
+fi
+
+# -----
 # Detect ffmpeg and ffprobe
 if [[ "x$(type -P ffmpeg)" == "x" ]]; then
   echo "ERROR ffmpeg was not found on your env PATH variable"
@@ -296,7 +306,7 @@ get_metadata_value() {
   local key
   key="$1"
         # Find the key in the meta data file                                  # Extract field value     # Remove the following /'s  "(Unabridged)  <blanks> at start end and multiples.
-  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | sed 's/[[:blank:]]\+/ /g')"
+  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | $SED -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | $SED 's/[[:blank:]]\+/ /g')"
 }
 
 # -----
@@ -325,7 +335,7 @@ do
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
-  title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/- /-/g' | xargs -0)
+  title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
