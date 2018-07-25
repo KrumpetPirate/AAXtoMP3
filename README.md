@@ -17,6 +17,7 @@ Audible fails for some reason.
 * ffmpeg version 2.8.3 or later
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
 * grep Some OS distributions do not have it installed.
+* sed Some OS versions will need to install gnu sed.
 * mp4art used to add cover art to m4a and m4b files. Optional
 
 ## OSX
@@ -151,6 +152,8 @@ sudo yum install ffmpeg
 __MacOS__
 ```
 brew install ffmpeg
+brew install gnu-sed
+brew install grep
 ```
 
 #### mp4art
