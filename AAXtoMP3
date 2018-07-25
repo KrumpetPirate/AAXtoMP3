@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>]\n[--output_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
@@ -143,6 +143,16 @@ if ! [[ $(type -P "$GREP") ]]; then
   echo "$GREP (GNU grep) is not in your PATH"
   echo "Without it, this script will break."
   echo "On macOS, you may want to try: brew install grep"
+  exit 1
+fi
+
+# -----
+# Detect which annoying version of sed we have
+SED=$(sed --version 2>&1 | $GREP -q GNU && echo "sed" || echo "gsed")
+if ! [[ $(type -P "$SED") ]]; then
+  echo "$SED (GNU sed) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install gnu-sed"
   exit 1
 fi
 
@@ -296,7 +306,7 @@ get_metadata_value() {
   local key
   key="$1"
         # Find the key in the meta data file                                  # Extract field value     # Remove the following /'s  "(Unabridged)  <blanks> at start end and multiples.
-  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | sed -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | sed 's/[[:blank:]]\+/ /g')"
+  echo "$($GREP --max-count=1 --only-matching "${key} *: .*" "$metadata_file" | cut -d : -f 2- | $SED -e 's#/##g;s/ (Unabridged)//;s/^[[:blank:]]\+//g;s/[[:blank:]]\+$//g' | $SED 's/[[:blank:]]\+/ /g')"
 }
 
 # -----
@@ -325,7 +335,7 @@ do
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
-  title=$(get_metadata_value title | sed 's/'\:'/'-'/g' | sed 's/- /-/g' | xargs -0)
+  title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
