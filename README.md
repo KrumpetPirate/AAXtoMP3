@@ -117,7 +117,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 __Ubuntu, Linux Mint, Debian__
 ```
 sudo apt-get update
-sudo apt-get install ffmpeg libav-tools x264 x265
+sudo apt-get install ffmpeg libav-tools x264 x265 bc
 ```
 
 __Fedora__
