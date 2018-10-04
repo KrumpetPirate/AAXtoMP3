@@ -46,7 +46,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-e:m4a**         Create a m4a audio file. This is identical to --aac
 * **-e:m4b**         Create a m4b aduio file. This is the book version of the m4a format. 
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
-* **-c** or **--chaptered** Output a single file per chapter. The --chaptered will only work if it follows the -aac -e:m4a -em4b options. 
+* **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b` options. 
 
 
 ### [AUTHCODE] 
