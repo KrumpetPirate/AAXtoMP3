@@ -424,7 +424,7 @@ do
         # Playlist creation.        
         duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
         echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
-        echo "${chapter_title}.${container}" >> "${playlist_file}"
+        echo "${chapter_title}.${extension}" >> "${playlist_file}"
         chapternum=$((chapternum + 1 ))
 
         # ----
