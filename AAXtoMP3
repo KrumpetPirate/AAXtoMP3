@@ -28,7 +28,7 @@ while true; do
                       # Apple m4a music format.
     -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;        
                       # Ogg Format
-    -o | --opus       ) codec=libopus; extension=ogg; container=flac;                   shift ;;        
+    -o | --opus       ) codec=libopus; extension=opus; container=ogg;                    shift ;;        
                       # If appropriate use only a single file output.
     -s | --single     ) mode=single;                                                    shift ;;        
                       # If appropriate use only a single file output.
