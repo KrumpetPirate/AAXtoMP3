@@ -163,7 +163,7 @@ if [[ "x$(type -P ffmpeg)" == "x" ]]; then
   echo "Without it, this script will break."
   echo "INSTALL:" 
   echo "MacOS:   brew install ffmpeg"
-  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265"
+  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
   echo "RHEL:    yum install ffmpeg"
   exit 1
 fi 
@@ -175,7 +175,7 @@ if [[ "x$(type -P ffprobe)" == "x" ]]; then
   echo "Without it, this script will break."
   echo "INSTALL:" 
   echo "MacOS:   brew install ffmpeg"
-  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265"
+  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
   echo "RHEL:    yum install ffmpeg"
   exit 1
 fi 
