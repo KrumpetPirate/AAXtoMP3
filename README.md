@@ -41,15 +41,15 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
 * **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
 * **-C** or **--complete_dir &lt;PATH&gt;** a directory to place aax files after they have been decoded successfully. Note make a back up of your aax files prior to using this option. Just in case something goes wrong.
-* **-V** or **--validate** Perform 2 validation tests on the supplied aax files. This is more extensive than the normal validation as we attempt to transcode the aax file to a null file.  This can take a long period of time. However it is usefull when inspecting a large set of aax files prior to transcoding. As download errors are common with Audible servers.
+* **-V** or **--validate** Perform 2 validation tests on the supplied aax files. This is more extensive than the normal validation as we attempt to transcode the aax file to a null file.  This can take a long period of time. However it is useful when inspecting a large set of aax files prior to transcoding. As download errors are common with Audible servers.
 * **-e:mp3**         Identical to defaults.
 * **-e:m4a**         Create a m4a audio file. This is identical to --aac
-* **-e:m4b**         Create a m4b aduio file. This is the book version of the m4a format. 
+* **-e:m4b**         Create a m4b audio file. This is the book version of the m4a format.
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
-* **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b` options. 
+* **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b` options.
 
 
-### [AUTHCODE] 
+### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
 
 #### Determining your own AUTHCODE
@@ -63,7 +63,7 @@ In order of __precidence__.
 1. __--authcode [AUTHCODE]__ The command line option. With the highest precidence.
 2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
 3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
-__Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occure.
+__Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occur.
 
 ### MP3 Encoding
 * This is the **default** encoding
@@ -99,7 +99,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default mode is **single**
 
 ### Validating AAX files
-* The **--validate** option will result in only a validation pass over the supplied aax file(s). No transcoding will occure. This is usefull when you wish to ensure you have a proper download of your personal Audible audio books. With this option all supplied books are validated.
+* The **--validate** option will result in only a validation pass over the supplied aax file(s). No transcoding will occur. This is useful when you wish to ensure you have a proper download of your personal Audible audio books. With this option all supplied books are validated.
 * If you do NOT supply the **--validate** option all audio books are still validated when they are processed. However if there is an invalid audio book in the supplied list of books the processing will stop at that point.
 * A third test is performed on the file where the entire file is inspected to see if it is valid. This is a lengthy process. However it will not break the script when an invalid file is found.
 * The 3 test current are:
