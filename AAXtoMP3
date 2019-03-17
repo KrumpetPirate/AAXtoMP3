@@ -47,7 +47,7 @@ while true; do
     -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;      
                       # Extremely verbose output.
     -d | --debug      ) DEBUG=1;                                                        shift ;;
-                      # Validate ONLY the aax file(s) No transcoding occures
+                      # Validate ONLY the aax file(s) No transcoding occurs
     -V | --validate   ) VALIDATE=1;                                                     shift ;;         
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;         
