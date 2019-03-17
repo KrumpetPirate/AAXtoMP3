@@ -350,13 +350,13 @@ do
 
   mkdir -p "${output_directory}"
 
-  # Fancy declartion of which book we are decoding.  Including the AUTHCODE.
+  # Fancy declaration of which book we are decoding.  Including the AUTHCODE.
   dashline="----------------------------------------------------"
   log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
   log "Source ${aax_file}"
 
-  # Big long DEBUG output.  Fully describes the settings used for transcoding.
-  # Not this is a long debug command. It's not critical to operation. It's purely for people debugging
+  # Big long DEBUG output. Fully describes the settings used for transcoding.
+  # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
   debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
 
