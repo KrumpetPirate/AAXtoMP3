@@ -36,9 +36,9 @@ while true; do
                       # This is the same as --single option.
     -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
                       # Identical to --acc option.
-    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
+    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
                       # Similiar to --aac but specific to audio books
-    -e:m4b            ) codec=copy; extension=m4a; mode=single; container=m4b;          shift ;;
+    -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;      
                       # Move the AAX file to a new directory when decoding is complete.
@@ -183,11 +183,23 @@ fi
 
 # -----
 # Detect if we need mp4art for cover additions to m4a & m4b files.
-if [[ "x${extension}" == "xm4a" && "x$(type -P mp4art)" == "x" ]]; then
+if [[ "x${container}" == "xmp4" && "x$(type -P mp4art)" == "x" ]]; then
   echo "WARN mp4art was not found on your env PATH variable"
   echo "Without it, this script will not be able to add cover art to"
   echo "m4b files. Note if there are no other errors the AAXtoMP3 will"
   echo "continue. However no cover art will be added to the output."
+  echo "INSTALL:" 
+  echo "MacOS:   brew install mp4v2"
+  echo "Ubuntu:  sudo apt-get install mp4v2-utils"
+fi
+
+# -----
+# Detect if we need mp4chaps for adding chapters to m4a & m4b files.
+if [[ "x${container}" == "xmp4" && "x$(type -P mp4chaps)" == "x" ]]; then
+  echo "WARN mp4chaps was not found on your env PATH variable"
+  echo "Without it, this script will not be able to add chapters to"
+  echo "m4a/b files. Note if there are no other errors the AAXtoMP3 will"
+  echo "continue. However no chapter data will be added to the output."
   echo "INSTALL:" 
   echo "MacOS:   brew install mp4v2"
   echo "Ubuntu:  sudo apt-get install mp4v2-utils"
@@ -429,16 +441,10 @@ do
 
         # ----
         # Add the cover art to m4a and m4b file types.
-        if [[ ${extension} == "m4a" && $(type -P mp4art) ]]; then
+        if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
           mp4art -q --add "${cover_file}" "${chapter_file}"
           log "Added cover art to ${chapter_title}"
         fi 
-
-        # ----
-        # Detect if we are actuall m4b instead of m4a Then rename the file.
-        if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
-          mv "${chapter_file}" "${chapter_file/.m4a/.m4b}"
-        fi
 
       fi
     done 9< "$metadata_file"
@@ -450,14 +456,13 @@ do
     # Perform file tasks on output file.
     # ----
     # Add the cover art to m4a and m4b file types.
-    if [[ ${extension} == "m4a" && $(type -P mp4art) ]]; then
+    if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
       mp4art -q --add "${cover_file}" "${output_file}"
       log "Added cover art to ${title}.${extension}"
     fi 
-    # ----
-    # Detect if we are actuall m4b instead of m4a Then rename the file.
-    if [[ ${extension} == "m4a" && ${container}="m4b" ]]; then
-      mv "${output_file}" "${output_file/.m4a/.m4b}"
+    if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
+      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${title}.chapters.txt"
+      mp4chaps -i "${output_file}"
     fi
   fi
 
