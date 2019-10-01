@@ -5,6 +5,7 @@ set -o errexit -o noclobber -o nounset -o pipefail
 codec=libmp3lame
 extension=mp3
 mode=chaptered
+noclobber=false
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 
 if ! [[ $(type -P "$GREP") ]]; then
@@ -15,8 +16,14 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-        echo "Usage: bash AAXtoMP3.sh [--flac] [--single] AUTHCODE {FILES}"
+        echo "Usage: bash AAXtoMP3.sh [-n|--no-clobber] [--flac] [--single] AUTHCODE {FILES}"
         exit 1
+fi
+
+if [[ "$1" = '--no-clobber' ]] || [[ "$1" = '-n' ]]
+then
+  noclobber=true
+  shift
 fi
 
 if [[ "$1" = '--flac' ]]
@@ -76,6 +83,13 @@ do
     artist=$(get_metadata_value artist)
     title=$(get_metadata_value title)
     output_directory="$(dirname "${path}")/${genre}/${artist}/${title}"
+
+    if [[ "$noclobber" = true ]] && [[ -d ${output_directory} ]]; then
+      debug "Output directory '${output_directory}' exists but noclobber is enabled.  Not overwriting"
+      rm "${metadata_file}"
+      exit 0
+    fi
+
     mkdir -p "${output_directory}"
     full_file_path="${output_directory}/${title}.${extension}"
 

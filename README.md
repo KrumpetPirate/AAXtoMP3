@@ -47,9 +47,12 @@ If you wish to convert to a single file you can add --single to the input. This 
 Additionally, if you have a .authcode file available in the current working directory, it will read the first line of
 that line and treat it like your auth_code. When you do this you do not need to specify an AUTHCODE input.
 
+If you want to prevent overwriting output files, pass `-n` or `--no-clobber` as an option.
+If the output directory already exists, AAXtoMP3 will exit early without overwriting those files.
+
 Here is the full usage (NOTE: Order matters!)
 ```
-bash AAXtoMP3 [--flac] [--single] AUTHCODE {FILES}
+bash AAXtoMP3 [-n|--no-clobber] [--flac] [--single] AUTHCODE {FILES}
 ```
 
 ## Anti-Piracy Notice
