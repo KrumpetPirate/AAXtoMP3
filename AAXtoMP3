@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
@@ -22,15 +22,15 @@ DEBUG=0                     # Default off, If set extremely verbose output.
 #
 # Process the command line options.  This allows for un-ordered options. Sorta like a getops style
 while true; do
-  case "$1" in 
+  case "$1" in
                       # Flac encoding
-    -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;        
+    -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;
                       # Apple m4a music format.
-    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;        
+    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
                       # Ogg Format
-    -o | --opus       ) codec=libopus; extension=ogg; container=flac;                   shift ;;        
+    -o | --opus       ) codec=libopus; extension=ogg; container=flac;                   shift ;;
                       # If appropriate use only a single file output.
-    -s | --single     ) mode=single;                                                    shift ;;        
+    -s | --single     ) mode=single;                                                    shift ;;
                       # If appropriate use only a single file output.
     -c | --chaptered  ) mode=chaptered;                                                 shift ;;
                       # This is the same as --single option.
@@ -40,21 +40,23 @@ while true; do
                       # Similiar to --aac but specific to audio books
     -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
-    -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;      
+    -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
                       # Move the AAX file to a new directory when decoding is complete.
     -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
-    -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;      
+    -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;
+                      # Don't overwrite the target directory if it already exists
+    -n | --no-clobber ) noclobber=1;                                                    shift ;;
                       # Extremely verbose output.
     -d | --debug      ) DEBUG=1;                                                        shift ;;
                       # Validate ONLY the aax file(s) No transcoding occurs
-    -V | --validate   ) VALIDATE=1;                                                     shift ;;         
+    -V | --validate   ) VALIDATE=1;                                                     shift ;;
                       # Command synopsis.
-    -h | --help       ) printf "$usage" $0 ;                                            exit ;;         
+    -h | --help       ) printf "$usage" $0 ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
-    --                )                                                                 shift; break ;; 
+    --                )                                                                 shift; break ;;
                       # Anything else stops command line processing.
-    *                 )                                                                 break ;;        
+    *                 )                                                                 break ;;
 
   esac
 done
@@ -105,13 +107,13 @@ debug_vars() {
     l=0
     for (( n=0; n<${#args[@]}; n++ )) ; do
       (( "${#args[$n]}" > "$l" )) && l=${#args[$n]}
-    done 
+    done
 
     # Print the Debug Message
     echo "$(date "+%F %T%z") DEBUG ${msg}"
     echo "=Start=========================================================================="
-  
-    # Using the max length of a var name we dynamically create the format.  
+
+    # Using the max length of a var name we dynamically create the format.
     fmt="%-"${l}"s = %s\n"
 
     for (( n=0; n<${#args[@]}; n++ )) ; do
@@ -121,7 +123,7 @@ debug_vars() {
     done
     echo "=End============================================================================"
   fi
-} 
+}
 
 # -----
 # log
@@ -161,24 +163,24 @@ fi
 if [[ "x$(type -P ffmpeg)" == "x" ]]; then
   echo "ERROR ffmpeg was not found on your env PATH variable"
   echo "Without it, this script will break."
-  echo "INSTALL:" 
+  echo "INSTALL:"
   echo "MacOS:   brew install ffmpeg"
   echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
   echo "RHEL:    yum install ffmpeg"
   exit 1
-fi 
+fi
 
 # -----
 # Detect ffmpeg and ffprobe
 if [[ "x$(type -P ffprobe)" == "x" ]]; then
   echo "ERROR ffprobe was not found on your env PATH variable"
   echo "Without it, this script will break."
-  echo "INSTALL:" 
+  echo "INSTALL:"
   echo "MacOS:   brew install ffmpeg"
   echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
   echo "RHEL:    yum install ffmpeg"
   exit 1
-fi 
+fi
 
 
 # -----
@@ -188,7 +190,7 @@ if [[ "x${container}" == "xmp4" && "x$(type -P mp4art)" == "x" ]]; then
   echo "Without it, this script will not be able to add cover art to"
   echo "m4b files. Note if there are no other errors the AAXtoMP3 will"
   echo "continue. However no cover art will be added to the output."
-  echo "INSTALL:" 
+  echo "INSTALL:"
   echo "MacOS:   brew install mp4v2"
   echo "Ubuntu:  sudo apt-get install mp4v2-utils"
 fi
@@ -200,7 +202,7 @@ if [[ "x${container}" == "xmp4" && "x$(type -P mp4chaps)" == "x" ]]; then
   echo "Without it, this script will not be able to add chapters to"
   echo "m4a/b files. Note if there are no other errors the AAXtoMP3 will"
   echo "continue. However no chapter data will be added to the output."
-  echo "INSTALL:" 
+  echo "INSTALL:"
   echo "MacOS:   brew install mp4v2"
   echo "Ubuntu:  sudo apt-get install mp4v2-utils"
 fi
@@ -220,26 +222,26 @@ fi
 if [ -z $auth_code ]; then
   echo "ERROR Missing authcode"
   echo "$usage"
-  exit 1  
+  exit 1
 fi
 
 # -----
 # Check the target dir for if set if it is writable
-if [[ "x${targetdir}" != "x"  ]]; then 
+if [[ "x${targetdir}" != "x"  ]]; then
   if [[ ! -w "${targetdir}" || ! -d "${targetdir}" ]] ; then
     echo "ERROR Target Directory does not exist or is not writable: \"$targetdir\""
     echo "$usage"
-    exit 1 
+    exit 1
   fi
 fi
 
 # -----
-# Check the target dir for if set if it is writable
-if [[ "x${completedir}" != "x"  ]]; then 
+# Check the completed dir for if set if it is writable
+if [[ "x${completedir}" != "x"  ]]; then
   if [[ ! -w "${completedir}" || ! -d "${completedir}" ]] ; then
     echo "ERROR Complete Directory does not exist or is not writable: \"$completedir\""
     echo "$usage"
-    exit 1 
+    exit 1
   fi
 fi
 
@@ -248,7 +250,7 @@ fi
 trap 'rm -r -f "${working_directory}"' EXIT
 
 # -----
-# Set up some basic working files ASAP.  Note the trap will clean this up no matter what. 
+# Set up some basic working files ASAP.  Note the trap will clean this up no matter what.
 working_directory=`mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir'`
 metadata_file="${working_directory}/metadata.txt"
 
@@ -257,7 +259,7 @@ metadata_file="${working_directory}/metadata.txt"
 validate_aax() {
   local media_file
   media_file="$1"
- 
+
   # Test for existance
   if [[ ! -r "${media_file}" ]] ; then
     log "ERROR File NOT Found: ${media_file}"
@@ -275,20 +277,20 @@ validate_aax() {
   output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
 
   # If invalid then say something.
-  if [[ $? != "0" ]] ; then 
+  if [[ $? != "0" ]] ; then
     # No matter what lets bark that something is wrong.
     log "ERROR: Invalid File: ${media_file}"
   elif [[ "${VALIDATE}" == "1" ]]; then
     # If the validate option is present then lets at least state what is valid.
     log "Test 2 SUCCESS: ${media_file}"
-  fi 
+  fi
 
-  # This is a big test only performed when the --validate swicth is passed.
+  # This is a big test only performed when the --validate switch is passed.
   if [[ "${VALIDATE}" == "1" ]]; then
     output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
-    if [[ $? != "0" ]] ; then 
+    if [[ $? != "0" ]] ; then
       log "ERROR: Invalid File: ${media_file}"
-    else 
+    else
       log "Test 3 SUCCESS: ${media_file}"
     fi
   fi
@@ -312,7 +314,7 @@ save_metadata() {
 
 # -----
 # Reach into the meta data and extract a specific value.
-#   This is a long pipe of transforms. 
+#   This is a long pipe of transforms.
 #   This finds the first occurance of the key : value pair.
 get_metadata_value() {
   local key
@@ -334,7 +336,7 @@ do
 
   # Validate the input aax file.  Note this happens no matter what.
   # It's just that if the validate option is set then we skip to next file.
-  # If however vlaidate is not set and we proceed with the script any errors will 
+  # If however vlaidate is not set and we proceed with the script any errors will
   # case the script to stop.
   validate_aax "${aax_file}"
   if [[ ${VALIDATE} == "1" ]] ; then
@@ -360,6 +362,10 @@ do
   album_date="$(get_metadata_value date)"
   copyright="$(get_metadata_value copyright)"
 
+  if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
+    log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
+    exit 0
+  fi
   mkdir -p "${output_directory}"
 
   # Fancy declaration of which book we are decoding.  Including the AUTHCODE.
@@ -384,7 +390,7 @@ do
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
   log "Extracting cover into ${cover_file}..."
-  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"    
+  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
 
   # -----
   # OK now spit the file if that's what you want.
@@ -408,11 +414,11 @@ do
         read -r -u9 _
         read -r -u9 _ _ chapter
 
-        # The formating of the chapters names and the file names.  
+        # The formating of the chapters names and the file names.
         # Chapter names are used in a few place.
         chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
         chapter_file="${output_directory}/${chapter_title}.${extension}"
-                
+
         # the ID3 tags must only be specified for *.mp3 files,
         # the other container formats come with their own
         # tagging mechanisms.
@@ -430,10 +436,10 @@ do
         </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         "${chapter_file}"
-        
+
         # -----
         # OK lets get what need for the next chapter in the Playlist m3u file.
-        # Playlist creation.        
+        # Playlist creation.
         duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
         echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
         echo "${chapter_title}.${extension}" >> "${playlist_file}"
@@ -444,7 +450,7 @@ do
         if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
           mp4art -q --add "${cover_file}" "${chapter_file}"
           log "Added cover art to ${chapter_title}"
-        fi 
+        fi
 
       fi
     done 9< "$metadata_file"
@@ -459,7 +465,7 @@ do
     if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
       mp4art -q --add "${cover_file}" "${output_file}"
       log "Added cover art to ${title}.${extension}"
-    fi 
+    fi
     if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
       ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${title}.chapters.txt"
       mp4chaps -i "${output_file}"
@@ -474,7 +480,7 @@ do
 
   # Move the aax file if the decode is completed and the --complete_dir is set to a valid location.
   # Check the target dir for if set if it is writable
-  if [[ "x${completedir}" != "x"  ]]; then 
+  if [[ "x${completedir}" != "x"  ]]; then
     log "Moving Transcoded ${aax_file} to ${completedir}"
     mv "${aax_file}" "${completedir}"
   fi
