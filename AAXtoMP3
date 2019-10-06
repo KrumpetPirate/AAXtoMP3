@@ -15,6 +15,7 @@ completedir=                # Optional location to move aax files once the decod
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
 DEBUG=0                     # Default off, If set extremely verbose output.
+noclobber=0                 # Default off, clobber only if flag is enabled
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
