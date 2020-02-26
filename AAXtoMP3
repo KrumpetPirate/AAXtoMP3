@@ -9,13 +9,13 @@ usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extention.
 mode=chaptered              # Multi file output
-auth_code=                  # Required to be set via file or option.
-targetdir=                  # Optional output location.  Note default is basedir of AAX file.
-completedir=                # Optional location to move aax files once the decoding is complete.
+authCode=                   # Required to be set via file or option.
+targetDir=                  # Optional output location.  Note default is basedir of AAX file.
+completeDir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
 DEBUG=0                     # Default off, If set extremely verbose output.
-noclobber=0                 # Default off, clobber only if flag is enabled
+noClobber=0                 # Default off, clobber only if flag is enabled
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -24,40 +24,40 @@ noclobber=0                 # Default off, clobber only if flag is enabled
 # Process the command line options.  This allows for un-ordered options. Sorta like a getops style
 while true; do
   case "$1" in
-                      # Flac encoding
-    -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;
-                      # Apple m4a music format.
-    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
-                      # Ogg Format
-    -o | --opus       ) codec=libopus; extension=ogg; container=flac;                   shift ;;
-                      # If appropriate use only a single file output.
-    -s | --single     ) mode=single;                                                    shift ;;
-                      # If appropriate use only a single file output.
-    -c | --chaptered  ) mode=chaptered;                                                 shift ;;
-                      # This is the same as --single option.
-    -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
-                      # Identical to --acc option.
-    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
-                      # Similiar to --aac but specific to audio books
-    -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
-                      # Change the working dir from AAX directory to what you choose.
-    -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
-                      # Move the AAX file to a new directory when decoding is complete.
-    -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
-                      # Authorization code associate with the AAX file(s)
-    -A | --authcode   ) auth_code="$2";                                                 shift 2 ;;
-                      # Don't overwrite the target directory if it already exists
-    -n | --no-clobber ) noclobber=1;                                                    shift ;;
-                      # Extremely verbose output.
-    -d | --debug      ) DEBUG=1;                                                        shift ;;
-                      # Validate ONLY the aax file(s) No transcoding occurs
-    -V | --validate   ) VALIDATE=1;                                                     shift ;;
-                      # Command synopsis.
-    -h | --help       ) printf "$usage" $0 ;                                            exit ;;
-                      # Standard flag signifying the end of command line processing.
-    --                )                                                                 shift; break ;;
-                      # Anything else stops command line processing.
-    *                 )                                                                 break ;;
+                        # Flac encoding
+    -f | --flac         ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;
+                        # Apple m4a music format.
+    -a | --aac          ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
+                        # Ogg Format
+    -o | --opus         ) codec=libopus; extension=ogg; container=flac;                   shift ;;
+                        # If appropriate use only a single file output.
+    -s | --single       ) mode=single;                                                    shift ;;
+                        # If appropriate use only a single file output.
+    -c | --chaptered    ) mode=chaptered;                                                 shift ;;
+                        # This is the same as --single option.
+    -e:mp3              ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
+                        # Identical to --acc option.
+    -e:m4a              ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
+                        # Similiar to --aac but specific to audio books
+    -e:m4b              ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
+                        # Change the working dir from AAX directory to what you choose.
+    -t | --target_dir   ) targetDir="$2";                                                 shift 2 ;;
+                        # Move the AAX file to a new directory when decoding is complete.
+    -C | --complete_dir ) completeDir="$2";                                               shift 2 ;;
+                        # Authorization code associate with the AAX file(s)
+    -A | --authcode     ) authCode="$2";                                                  shift 2 ;;
+                        # Don't overwrite the target directory if it already exists
+    -n | --no-clobber   ) noClobber=1;                                                    shift ;;
+                        # Extremely verbose output.
+    -d | --debug        ) DEBUG=1;                                                        shift ;;
+                        # Validate ONLY the aax file(s) No transcoding occurs
+    -V | --validate     ) VALIDATE=1;                                                     shift ;;
+                        # Command synopsis.
+    -h | --help         ) printf "$usage" $0 ;                                            exit ;;
+                        # Standard flag signifying the end of command line processing.
+    --                  )                                                                 shift; break ;;
+                        # Anything else stops command line processing.
+    *                   )                                                                 break ;;
 
   esac
 done
@@ -134,7 +134,62 @@ log() {
 
 # -----
 # Print out what we have already after command line processing.
-debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code
+debug_vars "Command line options as set" codec extension mode container targetDir completeDir authCode
+
+# ========================================================================
+# Bruteforce authcode
+clean_up_tables() {
+  echo "Cleaning up authcode rainbow tables"
+  DELETE=( *.sh *.c *.h *.cpp *.md *.txt run Makefile .git )
+  for DEL_ME in "${DELETE[@]}"; do
+    rm -rf "auth_crack"/$DEL_ME
+  done
+}
+
+clone_rainbow_tables() {
+  echo "Downloading authcode rainbow tables"
+  git clone -q https://github.com/inAudible-NG/tables.git auth_crack
+}
+
+obtain_checksum () {
+  local aaxFile
+  aaxFile=$1
+  echo -n "Trying to obtaining checksum"
+  checkSum=$(ffprobe $aaxFile 2>&1 | grep "checksum" | cut -f8 -d" ")
+  echo ": $checkSum"
+}
+
+obtain_auth_code () {
+  chksm=$1
+  echo -n "Trying to obtaining authcode"
+  authCode=$(./rcrack . -h $chksm  2>&1 | grep "hex" | cut -f5 -d" " | cut -f2 -d":")
+  echo ": $authCode"
+}
+
+crack_auth_code () {
+  local aaxFile
+  aaxFile=$1
+  # check if rainbow table dir exists
+  if [ ! -d auth_crack ] ; then
+    clone_rainbow_tables
+    clean_up_tables
+  fi
+  # get the files checksum
+  obtain_checksum $aaxFile
+  if [ -z $checkSum ] ; then
+    echo "ERROR Obtaining checksum failed"
+    exit 1
+  else
+    # change into autch_crack dir, other wise this does not work
+    cd auth_crack
+    obtain_auth_code $checkSum
+    if [ -z $authCode ] ; then
+      echo "ERROR Obtaining authcode failed"
+      exit 1
+    fi
+    cd ..
+  fi
+}
 
 # ========================================================================
 # Variable validation
@@ -183,6 +238,17 @@ if [[ "x$(type -P ffprobe)" == "x" ]]; then
   exit 1
 fi
 
+# -----
+# Detect git
+if [[ "x$(type -P git)" == "x" ]]; then
+  echo "ERROR git was not found on your env PATH variable"
+  echo "Without it, this script will break."
+  echo "INSTALL:"
+  echo "MacOS:   brew install git"
+  echo "Ubuntu:  sudo apt-get update; sudo apt-get upgrade; sudo apt-get install git"
+  echo "RHEL:    yum install git"
+  exit 1
+fi
 
 # -----
 # Detect if we need mp4art for cover additions to m4a & m4b files.
@@ -212,15 +278,27 @@ fi
 # Obtain the authcode from either the command line,  local directory or home directory.
 # See Readme.md for details on how to aquire your personal authcode for your personal
 # audible AAX files.
-if [ -z $auth_code ]; then
+if [ -z $authCode ]; then
   if [ -r .authcode ]; then
-    auth_code=`head -1 .authcode`
+    authCode=`head -1 .authcode`
   elif [ -r ~/.authcode ]; then
-    auth_code=`head -1 ~/.authcode`
+    authCode=`head -1 ~/.authcode`
   fi
 fi
+
+# Ask if authcode should be bruteforced
+if [ -z $authCode ]; then
+  echo "ERROR Missing authcode"
+  echo "This script can try to obtain the authcode by itself."
+  read -p "Do you want the script to try this? [Y/N]: " crackAuth
+  case "$crackAuth" in
+    y | Y ) authCode="crackMe" ;;
+    n | N ) echo "$usage" ; exit 1 ;;
+  esac
+fi
+
 # No point going on if no authcode found.
-if [ -z $auth_code ]; then
+if [ -z $authCode ]; then
   echo "ERROR Missing authcode"
   echo "$usage"
   exit 1
@@ -228,9 +306,9 @@ fi
 
 # -----
 # Check the target dir for if set if it is writable
-if [[ "x${targetdir}" != "x"  ]]; then
-  if [[ ! -w "${targetdir}" || ! -d "${targetdir}" ]] ; then
-    echo "ERROR Target Directory does not exist or is not writable: \"$targetdir\""
+if [[ "x${targetDir}" != "x"  ]]; then
+  if [[ ! -w "${targetDir}" || ! -d "${targetDir}" ]] ; then
+    echo "ERROR Target Directory does not exist or is not writable: \"$targetDir\""
     echo "$usage"
     exit 1
   fi
@@ -238,9 +316,9 @@ fi
 
 # -----
 # Check the completed dir for if set if it is writable
-if [[ "x${completedir}" != "x"  ]]; then
-  if [[ ! -w "${completedir}" || ! -d "${completedir}" ]] ; then
-    echo "ERROR Complete Directory does not exist or is not writable: \"$completedir\""
+if [[ "x${completeDir}" != "x"  ]]; then
+  if [[ ! -w "${completeDir}" || ! -d "${completeDir}" ]] ; then
+    echo "ERROR Complete Directory does not exist or is not writable: \"$completeDir\""
     echo "$usage"
     exit 1
   fi
@@ -275,7 +353,7 @@ validate_aax() {
   set +e errexit
 
   # Take a look at the aax file and see if it is valid.
-  output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
+  output="$(ffprobe -loglevel warning -activation_bytes ${authCode} -i "${media_file}" 2>&1)"
 
   # If invalid then say something.
   if [[ $? != "0" ]] ; then
@@ -288,7 +366,7 @@ validate_aax() {
 
   # This is a big test only performed when the --validate switch is passed.
   if [[ "${VALIDATE}" == "1" ]]; then
-    output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
+    output="$(ffmpeg -hide_banner -activation_bytes ${authCode} -i "${media_file}" -vn -f null - 2>&1)"
     if [[ $? != "0" ]] ; then
       log "ERROR: Invalid File: ${media_file}"
     else
@@ -325,7 +403,7 @@ get_metadata_value() {
 }
 
 # -----
-# specific varient of get_metadata_value bitrate is important for transcoding.
+# specific variant of get_metadata_value bitrate is important for transcoding.
 get_bitrate() {
   get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
 }
@@ -335,10 +413,14 @@ get_bitrate() {
 for aax_file
 do
 
+  if [[ $authCode == "crackMe" ]] ; then
+    crack_auth_code $aax_file
+  fi
+
   # Validate the input aax file.  Note this happens no matter what.
   # It's just that if the validate option is set then we skip to next file.
-  # If however vlaidate is not set and we proceed with the script any errors will
-  # case the script to stop.
+  # If however validate is not set and we proceed with the script any errors will
+  # cause the script to stop.
   validate_aax "${aax_file}"
   if [[ ${VALIDATE} == "1" ]] ; then
     # Don't bother doing anything else with this file.
@@ -351,8 +433,8 @@ do
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
-  if [ "x${targetdir}" != "x" ] ; then
-    output_directory="${targetdir}/${genre}/${artist}/${title}"
+  if [ "x${targetDir}" != "x" ] ; then
+    output_directory="${targetDir}/${genre}/${artist}/${title}"
   else
     output_directory="$(dirname "${aax_file}")/${genre}/${artist}/${title}"
   fi
@@ -363,27 +445,27 @@ do
   album_date="$(get_metadata_value date)"
   copyright="$(get_metadata_value copyright)"
 
-  if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
-    log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
+  if [[ "${noClobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
+    log "noClobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
     exit 0
   fi
   mkdir -p "${output_directory}"
 
   # Fancy declaration of which book we are decoding.  Including the AUTHCODE.
   dashline="----------------------------------------------------"
-  log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
+  log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${authCode}")"
   log "Source ${aax_file}"
 
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title authCode mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
 
   # -----
   # This is the main work horse command.  This is the primary transcoder.
   # This is the primary transcode. All the heavy lifting is here.
-  debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
-  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"
+  debug 'ffmpeg -loglevel error -stats -activation_bytes "${authCode}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
+  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${authCode}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"
 
   log "Created ${output_file}."
   # -----
@@ -391,7 +473,7 @@ do
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
   log "Extracting cover into ${cover_file}..."
-  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
+  </dev/null ffmpeg -loglevel error -activation_bytes "${authCode}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
 
   # -----
   # OK now spit the file if that's what you want.
@@ -481,9 +563,9 @@ do
 
   # Move the aax file if the decode is completed and the --complete_dir is set to a valid location.
   # Check the target dir for if set if it is writable
-  if [[ "x${completedir}" != "x"  ]]; then
-    log "Moving Transcoded ${aax_file} to ${completedir}"
-    mv "${aax_file}" "${completedir}"
+  if [[ "x${completeDir}" != "x"  ]]; then
+    log "Moving Transcoded ${aax_file} to ${completeDir}"
+    mv "${aax_file}" "${completeDir}"
   fi
 
 done
