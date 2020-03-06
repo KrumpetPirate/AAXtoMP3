@@ -351,6 +351,7 @@ do
   genre=$(get_metadata_value genre)
   artist=$(get_metadata_value artist)
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
+  title=${title:0:100}
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
