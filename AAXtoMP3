@@ -7,7 +7,7 @@
 # Usage Synopsis.
 usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
 codec=libmp3lame            # Default encoder.
-extension=mp3               # Default encoder extention.
+extension=mp3               # Default encoder extension.
 mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
@@ -38,7 +38,7 @@ while true; do
     -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
                       # Identical to --acc option.
     -e:m4a            ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
-                      # Similiar to --aac but specific to audio books
+                      # Similar to --aac but specific to audio books
     -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
@@ -140,7 +140,7 @@ debug_vars "Command line options as set" codec extension mode container targetdi
 # Variable validation
 
 # -----
-# Detect which annoying version fo grep we have
+# Detect which annoying version of grep we have
 GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 if ! [[ $(type -P "$GREP") ]]; then
   echo "$GREP (GNU grep) is not in your PATH"
@@ -210,7 +210,7 @@ fi
 
 # -----
 # Obtain the authcode from either the command line,  local directory or home directory.
-# See Readme.md for details on how to aquire your personal authcode for your personal
+# See Readme.md for details on how to acquire your personal authcode for your personal
 # audible AAX files.
 if [ -z $auth_code ]; then
   if [ -r .authcode ]; then
@@ -261,7 +261,7 @@ validate_aax() {
   local media_file
   media_file="$1"
 
-  # Test for existance
+  # Test for existence
   if [[ ! -r "${media_file}" ]] ; then
     log "ERROR File NOT Found: ${media_file}"
     return
@@ -316,7 +316,7 @@ save_metadata() {
 # -----
 # Reach into the meta data and extract a specific value.
 #   This is a long pipe of transforms.
-#   This finds the first occurance of the key : value pair.
+#   This finds the first occurrence of the key : value pair.
 get_metadata_value() {
   local key
   key="$1"
@@ -325,7 +325,7 @@ get_metadata_value() {
 }
 
 # -----
-# specific varient of get_metadata_value bitrate is important for transcoding.
+# specific variant of get_metadata_value bitrate is important for transcoding.
 get_bitrate() {
   get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
 }
@@ -337,7 +337,7 @@ do
 
   # Validate the input aax file.  Note this happens no matter what.
   # It's just that if the validate option is set then we skip to next file.
-  # If however vlaidate is not set and we proceed with the script any errors will
+  # If however validate is not set and we proceed with the script any errors will
   # case the script to stop.
   validate_aax "${aax_file}"
   if [[ ${VALIDATE} == "1" ]] ; then
@@ -416,7 +416,7 @@ do
         read -r -u9 _
         read -r -u9 _ _ chapter
 
-        # The formating of the chapters names and the file names.
+        # The formatting of the chapters names and the file names.
         # Chapter names are used in a few place.
         chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
         chapter_file="${output_directory}/${chapter_title}.${extension}"
@@ -434,7 +434,7 @@ do
 
         # Extract chapter by time stamps start and finish of chapter.
         # This extracts based on time stamps start and end.
-        log "Spliting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
+        log "Splitting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
         </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
         -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" \
@@ -458,7 +458,7 @@ do
       fi
     done 9< "$metadata_file"
 
-    # Clean up of working directoy stuff.
+    # Clean up of working directory stuff.
     rm "${output_file}"
     log "Done creating chapters for ${output_directory}."
   else

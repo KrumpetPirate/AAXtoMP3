@@ -36,7 +36,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 
 ## Options
 * **-f** or **--flac**   Flac Encoding and Produces a single file.
-* **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extention is .ogg
+* **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
 * **-n** or **--no-clobber** If set and the target directory already exists, AAXtoMP3 will exit without overwriting anything.
@@ -61,7 +61,7 @@ this string from a tool like
 
 #### Specifying the AUTHCODE.
 In order of __precidence__.
-1. __--authcode [AUTHCODE]__ The command line option. With the highest precidence.
+1. __--authcode [AUTHCODE]__ The command line option. With the highest precedence.
 2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
 3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
 __Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occur.
@@ -71,7 +71,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * Produces 1 or more mp3 files for the AAX title.
 * The default mode is **chaptered**
 * If you want a mp3 file per chapter do not use the -single option. 
-* A m3u playlist file will also be created in this instance in the case of **default** chaptered ouput.
+* A m3u playlist file will also be created in this instance in the case of **default** chaptered output.
 
 ### Ogg/Opus Encoding
 * Can be done by using the **-o** or **--opus** command line switches
@@ -96,7 +96,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * M4A is a container that is meant to hold music and is typically of a higher bitrate.
 * M4B is a container that is meant to hold audiobooks and is typically has bitrates of 64k and 32k.
 * Both formats are chaptered
-* Both support coverart internall
+* Both support coverart internal
 * The default mode is **single**
 
 ### Validating AAX files
@@ -109,7 +109,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
     1. entire file is valid and complete.  _only executed with the **--validate** option._
 
 ### Defaults
-* Default out put directory is the base directoy of each file listed. Plus the genre, Artist and Title of the Audio Book.
+* Default out put directory is the base directory of each file listed. Plus the genre, Artist and Title of the Audio Book.
 * The default codec is mp3
 * The default output is by chapter.
 
