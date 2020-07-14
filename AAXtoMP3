@@ -437,7 +437,7 @@ do
         log "Splitting chapter ${chapternum} start:${chapter_start%?}(s) end:${chapter_end}(s)"
         </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
         -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-        -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" \
+        -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" -map_chapters -1 \
         -f ${container} "${chapter_file}"
 
         # -----
