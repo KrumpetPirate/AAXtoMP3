@@ -57,7 +57,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 You will need your authentication code that comes from Audible's servers. This 
 will be used by ffmpeg to perform the initial audio convert. You can obtain 
 this string from a tool like 
-[audible-activator](https://github.com/inAudible-NG/audible-activator) or [audible-tools](http://audible-tools.github.io/).
+[audible-activator](https://github.com/inAudible-NG/audible-activator) or [audible-tools](http://audible-tools.github.io/) (Webbased Client).
 
 #### Specifying the AUTHCODE.
 In order of __precidence__.
