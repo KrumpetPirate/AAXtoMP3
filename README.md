@@ -29,7 +29,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
 ```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
@@ -48,6 +48,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-e:m4b**         Create a m4b audio file. This is the book version of the m4a format.
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b` options.
+* **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process get interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
 
 
 ### [AUTHCODE]
