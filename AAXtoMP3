@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 mode=chaptered              # Multi file output
@@ -16,6 +16,8 @@ container=mp3               # Just in case we need to change the container.  Use
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
 DEBUG=0                     # Default off, If set extremely verbose output.
 noclobber=0                 # Default off, clobber only if flag is enabled
+continue=0                  # Default off, If set Transcoding is skiped and chapter splitting starts at chapter continueAt.
+continueAt=1                # Optional chapter to continue splitting the chapters.
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -52,6 +54,8 @@ while true; do
     -d | --debug      ) DEBUG=1;                                                        shift ;;
                       # Validate ONLY the aax file(s) No transcoding occurs
     -V | --validate   ) VALIDATE=1;                                                     shift ;;
+                      # continue spliting chapters at chapter continueAt
+    --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
@@ -381,19 +385,21 @@ do
   debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
 
   # -----
-  # This is the main work horse command.  This is the primary transcoder.
-  # This is the primary transcode. All the heavy lifting is here.
-  debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
-  </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" -f ${container} "${output_file}"
+  if [ "${continue}" == "0" ]; then
+    # This is the main work horse command.  This is the primary transcoder.
+    # This is the primary transcode. All the heavy lifting is here.
+    debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
+    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" -f ${container} "${output_file}"
 
-  log "Created ${output_file}."
-  # -----
-
+    log "Created ${output_file}."
+    # -----
+  fi
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
-  log "Extracting cover into ${cover_file}..."
-  </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
-
+  if [ "${continue}" == "0" ]; then
+    log "Extracting cover into ${cover_file}..."
+    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
+  fi
   # -----
   # OK now spit the file if that's what you want.
   # If we want multiple file we take the big mp3 and split it by chapter.
@@ -402,13 +408,17 @@ do
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
     playlist_file="${output_directory}/${title}.m3u"
-    log "Creating PlayList ${title}.m3u"
-    echo '#EXTM3U' > "${playlist_file}"
+    if [ "${continue}" == "0" ]; then
+      log "Creating PlayList ${title}.m3u"
+      echo '#EXTM3U' > "${playlist_file}"
+    fi
 
     # Determine the number of chapters.
     chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
     log "Extracting ${chaptercount} chapter files from ${output_file}..."
-
+    if [ "${continue}" == "1" ]; then
+      log "Continuing at chapter ${continueAt}:"
+    fi
     chapternum=1
     while read -r -u9 first _ _ chapter_start _ chapter_end
     do
@@ -431,21 +441,21 @@ do
 
         # Big Long chapter debug
         debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
-
-        # Extract chapter by time stamps start and finish of chapter.
-        # This extracts based on time stamps start and end.
-        log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-        </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
-        -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-        -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" -map_chapters -1 \
-        -f ${container} "${chapter_file}"
-
-        # -----
-        # OK lets get what need for the next chapter in the Playlist m3u file.
-        # Playlist creation.
-        duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
-        echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
-        echo "${chapter_title}.${extension}" >> "${playlist_file}"
+        if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
+          # Extract chapter by time stamps start and finish of chapter.
+          # This extracts based on time stamps start and end.
+          log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
+          </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
+          -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
+          -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" -map_chapters -1 \
+          -f ${container} "${chapter_file}"
+          # -----
+          # OK lets get what need for the next chapter in the Playlist m3u file.
+          # Playlist creation.
+          duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
+          echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
+          echo "${chapter_title}.${extension}" >> "${playlist_file}"
+        fi
         chapternum=$((chapternum + 1 ))
 
         # ----
