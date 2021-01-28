@@ -169,9 +169,10 @@ if [[ "x$(type -P ffmpeg)" == "x" ]]; then
   echo "ERROR ffmpeg was not found on your env PATH variable"
   echo "Without it, this script will break."
   echo "INSTALL:"
-  echo "MacOS:   brew install ffmpeg"
-  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
-  echo "RHEL:    yum install ffmpeg"
+  echo "MacOS:           brew install ffmpeg"
+  echo "Ubuntu:          sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
+  echo "Ubuntu (20.04):  sudo apt-get update; sudo apt-get install ffmpeg x264 x265 bc"
+  echo "RHEL:            yum install ffmpeg"
   exit 1
 fi
 
