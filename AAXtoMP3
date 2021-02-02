@@ -214,6 +214,18 @@ if [[ "x${container}" == "xmp4" && "x$(type -P mp4chaps)" == "x" ]]; then
 fi
 
 # -----
+# Detect if we need mediainfo for adding description and narrator
+if [[ "x$(type -P mediainfo)" == "x" ]]; then
+  echo "WARN mediainfo was not found on your env PATH variable"
+  echo "Without it, this script will not be able to add the narrator"
+  echo "and description tags. Note if there are no other errors the AAXtoMP3"
+  echo "will continue. However no such tags will be added to the output."
+  echo "INSTALL:"
+  echo "MacOS:   brew install mediainfo"
+  echo "Ubuntu:  sudo apt-get install mediainfo"
+fi
+
+# -----
 # Obtain the authcode from either the command line,  local directory or home directory.
 # See Readme.md for details on how to acquire your personal authcode for your personal
 # audible AAX files.
@@ -314,6 +326,10 @@ save_metadata() {
   local media_file
   media_file="$1"
   ffprobe -i "$media_file" 2> "$metadata_file"
+  if [[ $(type -P mediainfo) ]]; then
+    # Mediainfo output is structured like ffprobe, so we append it to the metadata file and then parse it with get_metadata_value()
+    mediainfo "$media_file" >> "$metadata_file"
+  fi
   debug "Metadata file $metadata_file"
   debug_file "$metadata_file"
 }
@@ -368,6 +384,14 @@ do
   album="$(get_metadata_value album)"
   album_date="$(get_metadata_value date)"
   copyright="$(get_metadata_value copyright)"
+  # Get more tags with mediainfo
+  if [[ $(type -P mediainfo) ]]; then
+    narrator="$(get_metadata_value nrt)"
+    description="$(get_metadata_value Track_More)"
+  else
+    narrator=""
+    description=""
+  fi
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
     log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
@@ -383,14 +407,33 @@ do
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description output_file metadata_file working_directory
 
   # -----
   if [ "${continue}" == "0" ]; then
     # This is the main work horse command.  This is the primary transcoder.
     # This is the primary transcode. All the heavy lifting is here.
     debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
-    </dev/null ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" -f ${container} "${output_file}"
+    </dev/null ffmpeg -loglevel error \
+      -stats \
+      -activation_bytes "${auth_code}" \
+      -i "${aax_file}" \
+      -vn \
+      -codec:a "${codec}" \
+      -ab ${bitrate} \
+      -map_metadata -1 \
+      -metadata title="${title}" \
+      -metadata artist="${artist}" \
+      -metadata album_artist="${album_artist}" \
+      -metadata album="${album}" \
+      -metadata date="${album_date}" \
+      -metadata track="1/1" \
+      -metadata genre="${genre}" \
+      -metadata copyright="${copyright}" \
+      -metadata description="${description}" \
+      -metadata composer="${narrator}" \
+      -f ${container} \
+      "${output_file}"
 
     log "Created ${output_file}."
     # -----
@@ -446,10 +489,24 @@ do
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
           log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-          </dev/null ffmpeg -loglevel quiet -nostats -i "${output_file}" -i "${cover_file}" -ss "${chapter_start%?}" -to "${chapter_end}" -map 0:0 -map 1:0 -acodec "${codec}" ${id3_version_param} \
-          -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" -metadata track="${chapternum}" -metadata title="${chapter_title}" \
-          -metadata:s:a title="${chapter_title}" -metadata:s:a track="${chapternum}" -map_chapters -1 \
-          -f ${container} "${chapter_file}"
+          </dev/null ffmpeg -loglevel quiet \
+            -nostats \
+            -i "${output_file}" \
+            -i "${cover_file}" \
+            -ss "${chapter_start%?}" \
+            -to "${chapter_end}" \
+            -map 0:0 \
+            -map 1:0 \
+            -acodec "${codec}" ${id3_version_param} \
+            -metadata:s:v title="Album cover" \
+            -metadata:s:v comment="Cover (Front)" \
+            -metadata track="${chapternum}" \
+            -metadata title="${chapter_title}" \
+            -metadata:s:a title="${chapter_title}" \
+            -metadata:s:a track="${chapternum}" \
+            -map_chapters -1 \
+            -f ${container} \
+            "${chapter_file}"
           # -----
           # OK lets get what need for the next chapter in the Playlist m3u file.
           # Playlist creation.
