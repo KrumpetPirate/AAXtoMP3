@@ -16,7 +16,7 @@ container=mp3               # Just in case we need to change the container.  Use
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
 DEBUG=0                     # Default off, If set extremely verbose output.
 noclobber=0                 # Default off, clobber only if flag is enabled
-continue=0                  # Default off, If set Transcoding is skiped and chapter splitting starts at chapter continueAt.
+continue=0                  # Default off, If set Transcoding is skipped and chapter splitting starts at chapter continueAt.
 continueAt=1                # Optional chapter to continue splitting the chapters.
 
 # -----
@@ -54,7 +54,7 @@ while true; do
     -d | --debug      ) DEBUG=1;                                                        shift ;;
                       # Validate ONLY the aax file(s) No transcoding occurs
     -V | --validate   ) VALIDATE=1;                                                     shift ;;
-                      # continue spliting chapters at chapter continueAt
+                      # continue splitting chapters at chapter continueAt
     --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;
@@ -169,9 +169,10 @@ if [[ "x$(type -P ffmpeg)" == "x" ]]; then
   echo "ERROR ffmpeg was not found on your env PATH variable"
   echo "Without it, this script will break."
   echo "INSTALL:"
-  echo "MacOS:   brew install ffmpeg"
-  echo "Ubuntu:  sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
-  echo "RHEL:    yum install ffmpeg"
+  echo "MacOS:           brew install ffmpeg"
+  echo "Ubuntu:          sudo apt-get update; sudo apt-get install ffmpeg libav-tools x264 x265 bc"
+  echo "Ubuntu (20.04):  sudo apt-get update; sudo apt-get install ffmpeg x264 x265 bc"
+  echo "RHEL:            yum install ffmpeg"
   exit 1
 fi
 
