@@ -19,6 +19,7 @@ Audible fails for some reason.
 * grep Some OS distributions do not have it installed.
 * sed Some OS versions will need to install gnu sed.
 * mp4art used to add cover art to m4a and m4b files. Optional
+* mediainfo used to add additional media tags like narrator. Optional
 
 ## OSX
 Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
