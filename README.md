@@ -35,7 +35,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
 ## Options
-* **-f** or **--flac**   Flac Encoding and Produces a single file.
+* **-f** or **--flac**   Flac Encoding and as default produces a single file.
 * **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
@@ -47,8 +47,8 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-e:m4a**         Create a m4a audio file. This is identical to --aac
 * **-e:m4b**         Create a m4b audio file. This is the book version of the m4a format.
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
-* **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b` options.
-* **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process get interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
+* **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
+* **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
 
 
 ### [AUTHCODE]
@@ -71,7 +71,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * This is the **default** encoding
 * Produces 1 or more mp3 files for the AAX title.
 * The default mode is **chaptered**
-* If you want a mp3 file per chapter do not use the -single option. 
+* If you want a mp3 file per chapter do not use the **--single** option. 
 * A m3u playlist file will also be created in this instance in the case of **default** chaptered output.
 
 ### Ogg/Opus Encoding
@@ -90,7 +90,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * Can be done by using the **-f** or **--flac** command line switches
 * The default mode is **single**
 * FLAC is an open format with royalty-free licensing
-* Note: There is an bug with the ffmpeg software that prevents the splitting of flac files. Chaptered output of flac files will fail.
+* This will only produce 1 audio file as output. If you want a flac file per chapter do use the **--flac** option.
 
 ### M4A and M4B Containers
 * These containers were created by Apple Inc. They were meant to be the successor to mp3.
