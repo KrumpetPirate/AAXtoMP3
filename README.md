@@ -177,6 +177,21 @@ __MacOS__
 ```
 brew install mp4v2
 ```
+
+## Audible-cli integration
+Some information are not present in the AAX file. For example the chapters's
+title, additional chapters division (Opening and End credits, Copyright and more).
+Those information are avaiable via a non-publicly audible API. This [repo](https://github.com/mkb79/Audible)
+provides a python API, and the [audible-cli](https://github.com/mkb79/audible-cli)
+makes easy to get more info. In particular the flags **--cover --cover-size 1215 --chapter**
+downloads a better-quality cover (.jpg) and detailed chapter infos (.json).
+More info are avaiable on the package page.
+
+To make AAXtoMP3 use them, specify the **--use-audible-cli-data** flag: it will look
+for the cover and the chapter files in the same location of the AAX file.
+If you didn't move them around they are already there. For now they must have
+the name set by audible-cli.
+
  
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
