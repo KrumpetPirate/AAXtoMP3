@@ -90,7 +90,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * Can be done by using the **-f** or **--flac** command line switches
 * The default mode is **single**
 * FLAC is an open format with royalty-free licensing
-* This will only produce 1 audio file as output. If you want a flac file per chapter do use the **--flac** option.
+* This will only produce 1 audio file as output. If you want a flac file per chapter do use **-c** or **--chaptered**.
 
 ### M4A and M4B Containers
 * These containers were created by Apple Inc. They were meant to be the successor to mp3.
