@@ -491,10 +491,10 @@ do
           log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
           </dev/null ffmpeg -loglevel quiet \
             -nostats \
-            -i "${output_file}" \
-            -i "${cover_file}" \
             -ss "${chapter_start%?}" \
             -to "${chapter_end}" \
+            -i "${output_file}" \
+            -i "${cover_file}" \
             -map 0:0 \
             -map 1:0 \
             -acodec "${codec}" ${id3_version_param} \
