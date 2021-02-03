@@ -464,10 +464,27 @@ do
       log "Continuing at chapter ${continueAt}:"
     fi
     chapternum=1
+    # We pipe the metadata_file in read.
+    # Example of the section that we are interested in:
+    #
+    # Chapter #0:0: start 0.000000, end 1928.231474
+    # Metadata:
+    # title           : Chapter 1
+    #
+    # Then read the line in these variables:
+    # first            Chapter
+    # _                #0:0:
+    # _                start
+    # chapter_start    0.000000,
+    # _                end
+    # chapter_end      1928.231474
     while read -r -u9 first _ _ chapter_start _ chapter_end
     do
+      # Do things only if the line starts with 'Chapter'
       if [[ "${first}" = "Chapter" ]]; then
+        # The next line (Metadata:...) gets discarded
         read -r -u9 _
+        # From the line 'title  :  Chapter 1' we save the third field and those after in chapter
         read -r -u9 _ _ chapter
 
         # The formatting of the chapters names and the file names.
