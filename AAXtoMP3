@@ -284,7 +284,7 @@ validate_aax() {
   # Test for existence
   if [[ ! -r "${media_file}" ]] ; then
     log "ERROR File NOT Found: ${media_file}"
-    return
+    return 1
   else
     if [[ "${VALIDATE}" == "1" ]]; then
       log "Test 1 SUCCESS: ${media_file}"
@@ -321,6 +321,36 @@ validate_aax() {
 
   # Turn it back on.  ffprobe is done.
   set -e errexit
+}
+
+validate_extra_files() {
+  local extra_media_file extra_title extra_chapter_file
+  extra_media_file="$1"
+  # Bash trick to delete, non greedy, from the end up until the first '-'
+  extra_title="${extra_media_file%-*}"
+
+  # Using this is not ideal, because if the naming scheme is changed then
+  # this part of the script will break
+  # AAX file: BookTitle-LC_128_44100_stereo.aax
+  # Cover file: BookTitle_(1215).jpg
+  # Chapter file: BookTitle-chapters.json
+  extra_chapter_file="${extra_title}-chapters.json"
+
+  debug_vars "Audible-cli files" extra_media_file extra_title extra_chapter_file
+
+  # Test for chapter file existence
+  if [[ ! -r "${extra_chapter_file}" ]] ; then
+    log "ERROR File NOT Found: ${extra_chapter_file}"
+    return 1
+  fi
+
+  # Test for cover art existence (any resolution)
+  if [[ ! $(find -maxdepth 1 -regex ".*/${extra_title}_([0-9]+)\\.jpg") ]]; then
+    log "ERROR Cover File NOT Found"
+    return 1
+  fi
+
+  debug "All expected audible-cli related file are here"
 }
 
 # -----
@@ -367,6 +397,12 @@ do
   if [[ ${VALIDATE} == "1" ]] ; then
     # Don't bother doing anything else with this file.
     continue
+  fi
+  
+  if [[ ${audibleCli} == "1" ]] ; then
+    # If we have additional files (obtained via audible-cli), be sure that they
+    # exists and they are in the correct location.
+    validate_extra_files "${aax_file}"
   fi
 
   # -----
