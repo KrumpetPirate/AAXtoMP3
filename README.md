@@ -50,7 +50,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
 * **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
-
+* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](## Audible-cli integration) for more infos.
 
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
