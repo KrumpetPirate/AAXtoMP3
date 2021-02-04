@@ -553,6 +553,7 @@ do
             -map 0:0 \
             -map 1:0 \
             -acodec "${codec}" ${id3_version_param} \
+            ${compression_level_param} \
             -metadata:s:v title="Album cover" \
             -metadata:s:v comment="Cover (Front)" \
             -metadata track="${chapternum}" \
