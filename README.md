@@ -19,7 +19,6 @@ Audible fails for some reason.
 * grep Some OS distributions do not have it installed.
 * sed Some OS versions will need to install gnu sed.
 * mp4art used to add cover art to m4a and m4b files. Optional
-* mediainfo used to add additional media tags like narrator. Optional
 
 ## OSX
 Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
@@ -30,7 +29,7 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESSIONLEVEL>] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
 ```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
@@ -50,6 +49,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [-c|--chaptered] [
 * **-s** or **--single**    Output a single file for the entire book. If you only want a single ogg file for instance.
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
 * **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
+* **--level &lt;COMPRESSIONLEVEL&gt;**      Set compression level. May be given for mp3, flac and opus.
 
 
 ### [AUTHCODE]
@@ -74,11 +74,13 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default mode is **chaptered**
 * If you want a mp3 file per chapter do not use the **--single** option. 
 * A m3u playlist file will also be created in this instance in the case of **default** chaptered output.
+* **--level** has to be in range 0-9, where 9 is fastest and 0 is highest quality.
 
 ### Ogg/Opus Encoding
 * Can be done by using the **-o** or **--opus** command line switches
 * The default mode is **chaptered**
 * Opus coded files are stored in the ogg container format for better compatibility.
+* **--level** has to be in range 0-10, where 0 is fastest and 10 is highest quality.
 
 ### AAC Encoding
 * Can be done by using the **-a** or **--aac** command line switches
@@ -92,6 +94,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default mode is **single**
 * FLAC is an open format with royalty-free licensing
 * This will only produce 1 audio file as output. If you want a flac file per chapter do use **-c** or **--chaptered**.
+* **--level** has to be in range 0-12, where 0 is fastest and 12 is highest compression.
 
 ### M4A and M4B Containers
 * These containers were created by Apple Inc. They were meant to be the successor to mp3.
