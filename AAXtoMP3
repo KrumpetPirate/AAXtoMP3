@@ -446,7 +446,7 @@ do
     compression_level_param="-compression_level ${level}"
   fi
   
-  # -----  
+  # -----
   if [ "${continue}" == "0" ]; then
     # This is the main work horse command.  This is the primary transcoder.
     # This is the primary transcode. All the heavy lifting is here.
