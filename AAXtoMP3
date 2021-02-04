@@ -324,7 +324,7 @@ validate_aax() {
 }
 
 validate_extra_files() {
-  local extra_media_file extra_title extra_chapter_file
+  local extra_media_file # extra_title extra_chapter_file
   extra_media_file="$1"
   # Bash trick to delete, non greedy, from the end up until the first '-'
   extra_title="${extra_media_file%-*}"
@@ -336,16 +336,23 @@ validate_extra_files() {
   # Chapter file: BookTitle-chapters.json
   extra_chapter_file="${extra_title}-chapters.json"
 
-  debug_vars "Audible-cli files" extra_media_file extra_title extra_chapter_file
 
   # Test for chapter file existence
   if [[ ! -r "${extra_chapter_file}" ]] ; then
     log "ERROR File NOT Found: ${extra_chapter_file}"
     return 1
   fi
+  
+  extra_find_command='find -maxdepth 1 -regex ".*/${extra_title}_([0-9]+)\.jpg"'
+  # extra_cover_file="$(find -maxdepth 1 -regex \".*/${extra_title}_\(\[\0\-\9\]\+\)\\.jpg\")"
 
-  # Test for cover art existence (any resolution)
-  if [[ ! $(find -maxdepth 1 -regex ".*/${extra_title}_([0-9]+)\\.jpg") ]]; then
+  # We want the output of the find command, we will turn errexit on later
+  set +e errexit
+  extra_cover_file="$(eval ${extra_find_command})"
+  set -e errexit
+
+  debug_vars "Audible-cli files" extra_media_file extra_title extra_chapter_file extra_cover_file
+  if [[ "x${extra_cover_file}" == "x" ]] ; then
     log "ERROR Cover File NOT Found"
     return 1
   fi
@@ -479,9 +486,20 @@ do
   fi
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
+  extra_crop_cover=''
   if [ "${continue}" == "0" ]; then
-    log "Extracting cover into ${cover_file}..."
-    </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
+    if [ "${audibleCli}" == "1" ]; then
+      # We have a better quality cover file, copy it.
+      log "Copy cover file to ${cover_file}..."
+      cp "${extra_cover_file}" "${cover_file}"
+
+      # We now set a variable, ${extra_crop_cover}, which contains an additional
+      # ffmpeg flag. It crops the cover so the width and the height is divisible by two.
+      extra_crop_cover='-vf crop=trunc(iw/2)*2:trunc(ih/2)*2'
+    else
+      log "Extracting cover into ${cover_file}..."
+      </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
+    fi
   fi
   # -----
   # OK now spit the file if that's what you want.
@@ -540,20 +558,21 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file extra_crop_cover chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
           log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-          </dev/null ffmpeg -loglevel quiet \
-            -nostats \
+          ffmpeg \
             -ss "${chapter_start%?}" \
             -to "${chapter_end}" \
             -i "${output_file}" \
             -i "${cover_file}" \
+            ${extra_crop_cover} \
             -map 0:0 \
             -map 1:0 \
-            -acodec "${codec}" ${id3_version_param} \
+            -acodec "${codec}" \
+            ${id3_version_param} \
             -metadata:s:v title="Album cover" \
             -metadata:s:v comment="Cover (Front)" \
             -metadata track="${chapternum}" \
