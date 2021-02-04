@@ -281,7 +281,7 @@ validate_aax() {
   # Test for existence
   if [[ ! -r "${media_file}" ]] ; then
     log "ERROR File NOT Found: ${media_file}"
-    return
+    return 1
   else
     if [[ "${VALIDATE}" == "1" ]]; then
       log "Test 1 SUCCESS: ${media_file}"
