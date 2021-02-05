@@ -75,13 +75,13 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default mode is **chaptered**
 * If you want a mp3 file per chapter do not use the **--single** option. 
 * A m3u playlist file will also be created in this instance in the case of **default** chaptered output.
-* **--level** has to be in range 0-9, where 9 is fastest and 0 is highest quality.
+* **--level** has to be in range 0-9, where 9 is fastest and 0 is highest quality. Please note: The quality can **never** become higher than the qualitiy of the original aax file!
 
 ### Ogg/Opus Encoding
 * Can be done by using the **-o** or **--opus** command line switches
 * The default mode is **chaptered**
 * Opus coded files are stored in the ogg container format for better compatibility.
-* **--level** has to be in range 0-10, where 0 is fastest and 10 is highest quality.
+* **--level** has to be in range 0-10, where 0 is fastest and 10 is highest quality. Please note: The quality can **never** become higher than the qualitiy of the original aax file!
 
 ### AAC Encoding
 * Can be done by using the **-a** or **--aac** command line switches
@@ -95,7 +95,7 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default mode is **single**
 * FLAC is an open format with royalty-free licensing
 * This will only produce 1 audio file as output. If you want a flac file per chapter do use **-c** or **--chaptered**.
-* **--level** has to be in range 0-12, where 0 is fastest and 12 is highest compression.
+* **--level** has to be in range 0-12, where 0 is fastest and 12 is highest compression. Since flac is lossless, the quality always remains the same.
 
 ### M4A and M4B Containers
 * These containers were created by Apple Inc. They were meant to be the successor to mp3.
