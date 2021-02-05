@@ -443,6 +443,7 @@ do
       -metadata copyright="${copyright}" \
       -metadata description="${description}" \
       -metadata composer="${narrator}" \
+      -metadata publisher="${publisher}" \
       -f ${container} \
       "${output_file}"
 
