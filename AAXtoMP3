@@ -474,9 +474,9 @@ do
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   title=${title:0:100}
   if [ "x${targetdir}" != "x" ] ; then
-    output_directory="${targetdir}/${genre}/${artist}/${title}"
+    output_directory="${targetdir}/${artist}/${title}"
   else
-    output_directory="$(dirname "${aax_file}")/${genre}/${artist}/${title}"
+    output_directory="$(dirname "${aax_file}")/${artist}/${title}"
   fi
   output_file="${output_directory}/${title}.${extension}"
   bitrate="$(get_bitrate)k"
