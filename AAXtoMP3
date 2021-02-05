@@ -371,13 +371,14 @@ validate_extra_files() {
 
   # Cover
   extra_dirname="$(dirname "${extra_media_file}")"
-  extra_find_command='find "${extra_dirname}" -maxdepth 1 -regex ".*/${extra_title}_([0-9]+)\.jpg"'
+  extra_find_command='find "${extra_dirname}" -maxdepth 1 -regex ".*/${extra_title##*/}_([0-9]+)\.jpg"'
   # We want the output of the find command, we will turn errexit on later
   set +e errexit
   extra_cover_file="$(eval ${extra_find_command})"
+  extra_eval_comm="$(eval echo ${extra_find_command})"
   set -e errexit
 
-  debug_vars "Audible-cli variables" extra_media_file extra_title extra_chapter_file extra_cover_file extra_find_command extra_dirname
+  debug_vars "Audible-cli variables" extra_media_file extra_title extra_chapter_file extra_cover_file extra_find_command extra_eval_comm extra_dirname
 
   # Test for chapter file existence
   if [[ ! -r "${extra_chapter_file}" ]] ; then
