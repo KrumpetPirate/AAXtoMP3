@@ -460,6 +460,7 @@ do
   else
     narrator=""
     description=""
+    publisher=""
   fi
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
@@ -589,7 +590,8 @@ do
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
           log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
-          ffmpeg \
+          </dev/null ffmpeg -loglevel quiet \
+            -nostats \
             -ss "${chapter_start%?}" \
             -to "${chapter_end}" \
             -i "${output_file}" \
