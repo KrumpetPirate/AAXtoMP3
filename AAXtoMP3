@@ -397,9 +397,11 @@ do
   if [[ $(type -P mediainfo) ]]; then
     narrator="$(get_metadata_value nrt)"
     description="$(get_metadata_value Track_More)"
+    publisher="$(get_metadata_value pub)"
   else
     narrator=""
     description=""
+    publisher=""
   fi
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
