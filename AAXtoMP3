@@ -5,9 +5,10 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--chaptered]\n[-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
+level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
 mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
@@ -59,6 +60,8 @@ while true; do
     --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Use additional data got with mkb79/audible-cli
     --use-audible-cli-data ) audibleCli=1;                                              shift ;;
+                      # Compression level
+    --level           ) level="$2";                                                     shift 2 ;;
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
@@ -261,6 +264,34 @@ fi
 if [[ "x${completedir}" != "x"  ]]; then
   if [[ ! -w "${completedir}" || ! -d "${completedir}" ]] ; then
     echo "ERROR Complete Directory does not exist or is not writable: \"$completedir\""
+    echo "$usage"
+    exit 1
+  fi
+fi
+
+# -----
+# If a compression level is given, check whether the given codec supports compression level specifiers and whether the level is valid.
+if [ "${level}" != "-1" ]; then
+  if [ "${codec}" == "flac" ]; then
+    if [ "$((${level} < 0 || ${level} > 12 ))" = "1" ]; then
+      echo "ERROR Flac compression level has to be in the range from 0 to 12!"
+      echo "$usage"
+      exit 1
+    fi
+  elif [ "${codec}" == "libopus" ]; then
+    if [ "$((${level} < 0 || ${level} > 10 ))" = "1" ]; then
+      echo "ERROR Opus compression level has to be in the range from 0 to 10!"
+      echo "$usage"
+      exit 1
+    fi
+  elif [ "${codec}" == "libmp3lame" ]; then
+    if [ "$((${level} < 0 || ${level} > 9 ))" = "1" ]; then
+      echo "ERROR MP3 compression level has to be in the range from 0 to 9!"
+      echo "$usage"
+      exit 1
+    fi
+  else
+    echo "ERROR This codec doesnt support compression levels!"
     echo "$usage"
     exit 1
   fi
@@ -479,6 +510,12 @@ do
   # and coders wanting to extend the script.
   debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher output_file metadata_file working_directory
 
+  # If level != -1 specify a compression level in ffmpeg.
+  compression_level_param=""
+  if [ "${level}" != "-1" ]; then
+    compression_level_param="-compression_level ${level}"
+  fi
+  
   # -----
   if [ "${continue}" == "0" ]; then
     # This is the main work horse command.  This is the primary transcoder.
@@ -490,6 +527,7 @@ do
       -i "${aax_file}" \
       -vn \
       -codec:a "${codec}" \
+      ${compression_level_param} \
       -ab ${bitrate} \
       -map_metadata -1 \
       -metadata title="${title}" \
@@ -601,6 +639,7 @@ do
             -map 1:0 \
             -acodec "${codec}" \
             ${id3_version_param} \
+            ${compression_level_param} \
             -metadata:s:v title="Album cover" \
             -metadata:s:v comment="Cover (Front)" \
             -metadata track="${chapternum}" \
