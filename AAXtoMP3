@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--append-narrator]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -20,6 +20,7 @@ noclobber=0                 # Default off, clobber only if flag is enabled
 continue=0                  # Default off, If set Transcoding is skipped and chapter splitting starts at chapter continueAt.
 continueAt=1                # Optional chapter to continue splitting the chapters.
 audibleCli=0                # Default off, Use additional data gathered from mkb79/audible-cli
+appendNarrator=0            # Default off, Append the narrator name to the Folder name. Needs mediainfo
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -62,6 +63,8 @@ while true; do
     --use-audible-cli-data ) audibleCli=1;                                              shift ;;
                       # Compression level
     --level           ) level="$2";                                                     shift 2 ;;
+                      # Append Narrator
+    --append-narrator ) appendNarrator=1;                                               shift ;;
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
@@ -144,7 +147,7 @@ log() {
 
 # -----
 # Print out what we have already after command line processing.
-debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code audibleCli
+debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code appendNarrator audibleCli
 
 # ========================================================================
 # Variable validation
@@ -295,6 +298,13 @@ if [ "${level}" != "-1" ]; then
     echo "$usage"
     exit 1
   fi
+fi
+
+# -----
+# Check for presence of mediainfo in case the flag --append-narrator is used
+if [[ "${appendNarrator}" == 1 && "x$(type -P mediainfo)" == "x" ]]; then
+  echo "ERROR --append-narator specified, but mediainfo is not in PATH"
+  exit 1
 fi
 
 # -----
@@ -494,7 +504,11 @@ do
     description=""
     publisher=""
   fi
-
+  # If the flag --append-narrator is used, we append the narrator name to the output dir
+  if [[ "${appendNarrator}" == 1 ]]; then
+    output_directory="${output_directory}"-"${narrator}"
+    output_file="${output_directory}/${title}.${extension}"
+  fi
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
     log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
     exit 0
