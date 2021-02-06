@@ -358,8 +358,17 @@ save_metadata() {
   media_file="$1"
   ffprobe -i "$media_file" 2> "$metadata_file"
   if [[ $(type -P mediainfo) ]]; then
+    echo "Mediainfo data START" >> "$metadata_file"
     # Mediainfo output is structured like ffprobe, so we append it to the metadata file and then parse it with get_metadata_value()
-    mediainfo "$media_file" >> "$metadata_file"
+    # mediainfo "$media_file" >> "$metadata_file"
+    # Or we only get the data we are intrested in:
+    # Description
+    echo "Track_More :" "$(mediainfo --Inform="General;%Track_More%" "$media_file")" >> "$metadata_file"
+    # Narrator
+    echo "nrt :" "$(mediainfo --Inform="General;%nrt%" "$media_file")" >> "$metadata_file"
+    # Publisher
+    echo "pub :" "$(mediainfo --Inform="General;%pub%" "$media_file")" >> "$metadata_file"
+    echo "Mediainfo data END" >> "$metadata_file"
   fi
   debug "Metadata file $metadata_file"
   debug_file "$metadata_file"
@@ -419,9 +428,11 @@ do
   if [[ $(type -P mediainfo) ]]; then
     narrator="$(get_metadata_value nrt)"
     description="$(get_metadata_value Track_More)"
+    publisher="$(get_metadata_value pub)"
   else
     narrator=""
     description=""
+    publisher=""
   fi
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
@@ -438,7 +449,7 @@ do
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher output_file metadata_file working_directory
 
   # If level != -1 specify a compression level in ffmpeg.
   compression_level_param=""
@@ -470,6 +481,7 @@ do
       -metadata copyright="${copyright}" \
       -metadata description="${description}" \
       -metadata composer="${narrator}" \
+      -metadata publisher="${publisher}" \
       -f ${container} \
       "${output_file}"
 
