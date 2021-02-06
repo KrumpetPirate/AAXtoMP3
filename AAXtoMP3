@@ -5,7 +5,10 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--append-narrator]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]
+  [--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]
+  [--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--append-narrator]
+  [--use-audible-cli-data] [--continue <CHAPTERNUMBER>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -431,7 +434,7 @@ save_metadata() {
     # put a ',' after the start value, we calculate the end of each chapter
     # as start+length, and we convert (divide) the time stamps from ms to s.
     # Then we delete all ':' since they make a filename invalid.
-    jq -r '.content_metadata.chapter_info.chapters[] | "Chapter # start: \(.start_offset_ms/1000), end: \((.start_offset_ms+.length_ms)/1000) \n#\n# Title: \(.title)\n\n"' "${extra_chapter_file}" \
+    jq -r '.content_metadata.chapter_info.chapters[] | "Chapter # start: \(.start_offset_ms/1000), end: \((.start_offset_ms+.length_ms)/1000) \n#\n# Title: \(.title)"' "${extra_chapter_file}" \
       | tr -d ':' >> "$metadata_file"
   fi
   debug "Metadata file $metadata_file"
