@@ -144,7 +144,7 @@ log() {
 
 # -----
 # Print out what we have already after command line processing.
-debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code
+debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code audibleCli
 
 # ========================================================================
 # Variable validation
