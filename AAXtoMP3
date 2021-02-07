@@ -532,9 +532,9 @@ do
   # for more detail
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
-    playlist_file="${output_directory}/${fileNameScheme}.m3u"
+    playlist_file="${output_directory}/${currentFileNameScheme}.m3u"
     if [ "${continue}" == "0" ]; then
-      log "Creating PlayList ${fileNameScheme}.m3u"
+      log "Creating PlayList ${currentFileNameScheme}.m3u"
       echo '#EXTM3U' > "${playlist_file}"
     fi
 
