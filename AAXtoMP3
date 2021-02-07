@@ -13,8 +13,11 @@ mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
 dirNameScheme=              # Custom directory naming scheme, default is $genre/$author/$title
+customDNS=0
 fileNameScheme=             # Custom file naming scheme, default is $title
+customFNS=0
 chapterNameScheme=          # Custom chapter naming scheme, default is '$title-$(printf %0${#chaptercount}d $chapternum) $chapter' (BookTitle-01 Chapter 1)
+customCNS=0
 completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
@@ -49,11 +52,11 @@ while true; do
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
                       # Use a custom directory naming scheme, with variables.
-    -D | --dir-naming-scheme ) dirNameScheme="$2";                                      shift 2 ;;
+    -D | --dir-naming-scheme ) dirNameScheme="$2"; customDNS=1                          shift 2 ;;
                       # Use a custom file naming scheme, with variables.
-    -F | --file-naming-scheme ) fileNameScheme="$2";                                    shift 2 ;;
-                       # Use a custom chapter naming schemr, with variables.
-    --chapter-naming-scheme ) chapterNameScheme="$2";                                   shift 2 ;;
+    -F | --file-naming-scheme ) fileNameScheme="$2"; customFNS=1                        shift 2 ;;
+                       # Use a custom chapter naming scheme, with variables.
+    --chapter-naming-scheme ) chapterNameScheme="$2"; customCNS=1                       shift 2 ;;
                       # Move the AAX file to a new directory when decoding is complete.
     -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
@@ -439,32 +442,29 @@ do
     publisher=""
   fi
 
-  # dirNameScheme=
-  # fileNameScheme=
-  # chapterNameScheme=
   # Define the output_directory
-  if [ "x${dirNameScheme}" != "x" ]; then
-    dirNameScheme="$(eval echo "${dirNameScheme}")"
+  if [ "${customDNS}" == "1" ]; then
+    currentDirNameScheme="$(eval echo "${dirNameScheme}")"
   else
     # The Default
-    dirNameScheme="${genre}/${artist}/${title}"
+    currentDirNameScheme="${genre}/${artist}/${title}"
   fi
 
   # If we defined a target directory, use it. Otherwise use the location of the AAX file
   if [ "x${targetdir}" != "x" ] ; then
-    output_directory="${targetdir}/${dirNameScheme}/"
+    output_directory="${targetdir}/${currentDirNameScheme}/"
   else
-    output_directory="$(dirname "${aax_file}")/${dirNameScheme}/"
+    output_directory="$(dirname "${aax_file}")/${currentDirNameScheme}/"
   fi
 
   # Define the output_file
-  if [ "x${fileNameScheme}" != "x" ]; then
-    fileNameScheme="$(eval echo "${fileNameScheme}")"
+  if [ "${customFNS}" == "1" ]; then
+    currentFileNameScheme="$(eval echo "${fileNameScheme}")"
   else
     # The Default
-    fileNameScheme="${title}"
+    currentFileNameScheme="${title}"
   fi
-  output_file="${output_directory}/${fileNameScheme}.${extension}"
+  output_file="${output_directory}/${currentFileNameScheme}.${extension}"
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
     log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
@@ -480,7 +480,7 @@ do
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher dirNameScheme output_directory fileNameScheme output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher currentDirNameScheme output_directory currentFileNameScheme output_file metadata_file working_directory
 
   # If level != -1 specify a compression level in ffmpeg.
   compression_level_param=""
@@ -571,7 +571,7 @@ do
         # The formatting of the chapters names and the file names.
         # Chapter names are used in a few place.
         # Define the chapter_file
-        if [ "x${chapterNameScheme}" != "x" ]; then
+        if [ "${customCNS}" == "1" ]; then
           chapter_title="$(eval echo "${chapterNameScheme}")"
         else
           # The Default
