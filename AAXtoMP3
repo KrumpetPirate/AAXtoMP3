@@ -52,11 +52,11 @@ while true; do
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
                       # Use a custom directory naming scheme, with variables.
-    -D | --dir-naming-scheme ) dirNameScheme="$2"; customDNS=1                          shift 2 ;;
+    -D | --dir-naming-scheme ) dirNameScheme="$2"; customDNS=1;                         shift 2 ;;
                       # Use a custom file naming scheme, with variables.
-    -F | --file-naming-scheme ) fileNameScheme="$2"; customFNS=1                        shift 2 ;;
+    -F | --file-naming-scheme ) fileNameScheme="$2"; customFNS=1;                       shift 2 ;;
                        # Use a custom chapter naming scheme, with variables.
-    --chapter-naming-scheme ) chapterNameScheme="$2"; customCNS=1                       shift 2 ;;
+    --chapter-naming-scheme ) chapterNameScheme="$2"; customCNS=1;                      shift 2 ;;
                       # Move the AAX file to a new directory when decoding is complete.
     -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
