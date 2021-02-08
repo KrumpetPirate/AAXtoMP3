@@ -416,7 +416,7 @@ do
   if [ "${keepArtist}" != "-1" ]; then
     #                                                                 sed command: 'C. S. Lewis' -> 'C.S. Lewis'
     artist=$(get_metadata_value artist | cut -d',' -f"$keepArtist" | $SED -E 's|\. +|\.|g; s|((\w+\.)+)|\1 |g')
-    album_artist="$(get_metadata_value album_artist | cut -d',' -f"$keepArtist" | $SED -E 's|\. +|\.|g; s|((\w+\.)')"
+    album_artist="$(get_metadata_value album_artist | cut -d',' -f"$keepArtist" | $SED -E 's|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
   else
     artist=$(get_metadata_value artist)
     album_artist="$(get_metadata_value album_artist)"
