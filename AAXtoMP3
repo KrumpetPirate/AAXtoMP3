@@ -417,15 +417,17 @@ do
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
   if [ "x${authorOverride}" != "x" ]; then
-    #Override
+    #Manual Override
     artist="${authorOverride}"
     album_artist="${authorOverride}"
   else
     if [ "${keepArtist}" != "-1" ]; then
-      #                                                                 sed command: 'C. S. Lewis' -> 'C.S. Lewis'
-      artist=$(get_metadata_value artist | cut -d',' -f"$keepArtist" | $SED -E 's|\. +|\.|g; s|((\w+\.)+)|\1 |g')
-      album_artist="$(get_metadata_value album_artist | cut -d',' -f"$keepArtist" | $SED -E 's|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
+      # Choose artist from the one that are present in the metadata. Comma separated list of names
+      #                                                                 remove leading space;     'C. S. Lewis' -> 'C.S. Lewis'
+      artist="$(get_metadata_value artist | cut -d',' -f"$keepArtist" | $SED -E 's|^ ||g; s|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
+      album_artist="$(get_metadata_value album_artist | cut -d',' -f"$keepArtist" | $SED -E 's|^ ||g; s|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
     else
+      # The default
       artist=$(get_metadata_value artist)
       album_artist="$(get_metadata_value album_artist)"
     fi
