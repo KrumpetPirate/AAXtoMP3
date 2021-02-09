@@ -126,11 +126,13 @@ The following flags can modify the default naming scheme:
 * **--dir-naming-scheme**     
 * **--file-naming-scheme**    
 * **--chapter-naming-scheme** 
+
 Each flag takes a string as argument. If the string contains a variable defined in the script (eg. artist, title, chapter, narrator...), the corresponding value is used.
 The default options correspond to the following flags:
 * `--dir-naming-scheme '$genre/$artist/$title'`
 * `--file-naming-scheme '$title'`
 * `--chapter-naming-scheme '$title-$(printf %0${#chaptercount}d $chapternum) $chapter'`
+
 * If a command substitution is present in the passed string, (for example `$(printf %0${#chaptercount}d $chapternum)`, used to pad with zeros the chapter number), the commands are executed.
 So you can use `--dir-naming-scheme '$(date +%Y)/$artist'`, but using `--file-naming-scheme '$(rm -rf /)'` is a really bad idea. Be careful.
 * You can use basic text, like `--dir-naming-scheme 'Converted/$title'`
