@@ -549,11 +549,11 @@ do
         # as long as the whole audiobook.
         chapter_codec=""
         if test "${extension}" = "flac"; then
-          chapter_codec="-acodec flac "${compression_level_param}""
+          chapter_codec="flac "${compression_level_param}""
         else
-          chapter_codec="-acodec copy"
+          chapter_codec="copy"
         fi
-        
+
         # Big Long chapter debug
         debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
@@ -568,7 +568,7 @@ do
             -i "${cover_file}" \
             -map 0:0 \
             -map 1:0 \
-            ${chapter_codec} \
+            -acodec ${chapter_codec} \
             -metadata:s:v title="Album cover" \
             -metadata:s:v comment="Cover (Front)" \
             -metadata track="${chapternum}" \
