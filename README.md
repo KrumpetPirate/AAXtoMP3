@@ -51,7 +51,7 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
 * **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
 * **--level &lt;COMPRESSIONLEVEL&gt;**      Set compression level. May be given for mp3, flac and opus.
-* **--keep-artist &lt;FIELD&gt;**           If a book has multiple authors and you don't want all of them in the metadata, with this flag you can specify a specific author (1 is the first, 2 is the second...) to keep while discarding the others.
+* **--keep-author &lt;FIELD&gt;**           If a book has multiple authors and you don't want all of them in the metadata, with this flag you can specify a specific author (1 is the first, 2 is the second...) to keep while discarding the others.
 * **--author &lt;AUTHOR&gt;**               Manually set the author metadata field, useful if you have multiple books of the same author but the name reported is different (eg. spacing, accents..)
 
 
