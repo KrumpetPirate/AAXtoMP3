@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES} [--loglevel <LOGLEVEL>]\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -15,7 +15,7 @@ targetdir=                  # Optional output location.  Note default is basedir
 completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
-DEBUG=0                     # Default off, If set extremely verbose output.
+loglevel=1                  # Default off, If set extremely verbose output.
 noclobber=0                 # Default off, clobber only if flag is enabled
 continue=0                  # Default off, If set Transcoding is skipped and chapter splitting starts at chapter continueAt.
 continueAt=1                # Optional chapter to continue splitting the chapters.
@@ -52,7 +52,9 @@ while true; do
                       # Don't overwrite the target directory if it already exists
     -n | --no-clobber ) noclobber=1;                                                    shift ;;
                       # Extremely verbose output.
-    -d | --debug      ) DEBUG=1;                                                        shift ;;
+    -d | --debug      ) loglevel=3;                                                     shift ;;
+                      # Set loglevel.
+    -l | --loglevel   ) loglevel="$2";                                                  shift 2 ;;
                       # Validate ONLY the aax file(s) No transcoding occurs
     -V | --validate   ) VALIDATE=1;                                                     shift ;;
                       # continue splitting chapters at chapter continueAt
@@ -86,7 +88,7 @@ set -o errexit -o noclobber -o nounset -o pipefail
 # debug
 # debug "Some longish message"
 debug() {
-  if [ $DEBUG == 1 ] ; then
+  if [ $loglevel == 3 ] ; then
     echo "$(date "+%F %T%z") DEBUG ${1}"
   fi
 }
@@ -95,7 +97,7 @@ debug() {
 # debug dump contents of a file to STDOUT
 # debug "<full path to file>"
 debug_file() {
-  if [ $DEBUG == 1 ] ; then
+  if [ $loglevel == 3 ] ; then
     echo "$(date "+%F %T%z") DEBUG"
     echo "=Start=========================================================================="
     cat "${1}"
@@ -107,7 +109,7 @@ debug_file() {
 # debug dump a list of internal script variables to STDOUT
 # debug_vars "Some Message" var1 var2 var3 var4 var5
 debug_vars() {
-  if [ $DEBUG == 1 ] ; then
+  if [ $loglevel == 3 ] ; then
     msg="$1"; shift ; # Grab the message
     args=("$@")       # Grab the rest of the args
 
@@ -136,10 +138,37 @@ debug_vars() {
 # -----
 # log
 log() {
-  echo "$(date "+%F %T%z") ${1}"
+  if [ "$((${loglevel} > 1))" == "1" ] ; then
+    echo "$(date "+%F %T%z") ${1}"
+  else
+    echo "${1}"
+  fi
 }
 
 # -----
+#progressbar produces a progressbar in the style of
+# process: |#######             |  XX% (part/total unit)
+# which is gonna be overwritten by the next line.
+
+progressbar() {
+  #get input
+  part=${1}
+  total=${2}
+
+  #compute percentage and make print_percentage the same length regardless of the number of digits.
+  percentage=$((part*100/total))
+  if [ "$((percentage<10))" = "1" ]; then print_percentage="  $percentage"
+  elif [ "$((percentage<100))" = "1" ]; then print_percentage=" $percentage"
+  else print_percentage="$percentage"; fi
+
+  #draw progressbar with one # for every 5% and blank spaces for the missing part.
+  progressbar=""
+  for (( n=0; n<(percentage/5); n++ )) ; do progressbar="$progressbar#"; done
+  for (( n=0; n<(20-(percentage/5)); n++ )) ; do progressbar="$progressbar "; done
+
+  #print progressbar
+  echo -ne "Chapter splitting: |$progressbar| $print_percentage% ($part/$total chapters)\r"
+}
 # Print out what we have already after command line processing.
 debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code
 
@@ -266,6 +295,17 @@ if [[ "x${completedir}" != "x"  ]]; then
   fi
 fi
 
+# -----
+# Check whether the loglevel is valid
+if [ "$((${loglevel} < 0 || ${loglevel} > 3 ))" = "1" ]; then
+  echo "ERROR loglevel has to be in the range from 0 to 3!"
+  echo "      0: Show progress only"
+  echo "      1: default"
+  echo "      2: a little more information, timestamps"
+  echo "      3: debug"
+  echo "$usage"
+  exit 1
+fi
 # -----
 # If a compression level is given, check whether the given codec supports compression level specifiers and whether the level is valid.
 if [ "${level}" != "-1" ]; then
@@ -441,16 +481,28 @@ do
   fi
   mkdir -p "${output_directory}"
 
-  # Fancy declaration of which book we are decoding.  Including the AUTHCODE.
-  dashline="----------------------------------------------------"
-  log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
-  log "Source ${aax_file}"
+  if [ "$((${loglevel} > 0))" = "1" ]; then
+    # Fancy declaration of which book we are decoding.  Including the AUTHCODE.
+    dashline="----------------------------------------------------"
+    log "$(printf '\n----Decoding---%s%s--%s--' "${title}" "${dashline:${#title}}" "${auth_code}")"
+    log "Source: ${aax_file}"
+  fi
 
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
   debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher output_file metadata_file working_directory
 
+  # Display the total length of the audiobook in format hh:mm:ss
+  total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${aax_file} | cut -d . -f 1)"
+  hours="$((total_length/3600))"
+  if [ "$((hours<10))" = "1" ]; then hours="0$hours"; fi
+  minutes="$((total_length/60-60*hours))"
+  if [ "$((minutes<10))" = "1" ]; then minutes="0$minutes"; fi
+  seconds="$((total_length-3600*hours-60*minutes))"
+  if [ "$((seconds<10))" = "1" ]; then seconds="0$seconds"; fi
+  log "Total length: $hours:$minutes:$seconds"
+  
   # If level != -1 specify a compression level in ffmpeg.
   compression_level_param=""
   if [ "${level}" != "-1" ]; then
@@ -484,14 +536,17 @@ do
       -metadata publisher="${publisher}" \
       -f ${container} \
       "${output_file}"
-
-    log "Created ${output_file}."
+    if [ "$((${loglevel} > 0))" == "1" ]; then
+      log "Created ${output_file}."
+    fi
     # -----
   fi
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
   if [ "${continue}" == "0" ]; then
-    log "Extracting cover into ${cover_file}..."
+    if [ "$((${loglevel} > 1))" == "1" ]; then
+      log "Extracting cover into ${cover_file}..."
+    fi
     </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
   fi
   # -----
@@ -503,17 +558,25 @@ do
     # Playlist m3u support
     playlist_file="${output_directory}/${title}.m3u"
     if [ "${continue}" == "0" ]; then
-      log "Creating PlayList ${title}.m3u"
+      if [ "$((${loglevel} > 0))" == "1" ]; then
+        log "Creating PlayList ${title}.m3u"
+      fi
       echo '#EXTM3U' > "${playlist_file}"
     fi
 
     # Determine the number of chapters.
     chaptercount=$($GREP -Pc "Chapter.*start.*end" $metadata_file)
-    log "Extracting ${chaptercount} chapter files from ${output_file}..."
-    if [ "${continue}" == "1" ]; then
-      log "Continuing at chapter ${continueAt}:"
+    if [ "$((${loglevel} > 0))" == "1" ]; then
+      log "Extracting ${chaptercount} chapter files from ${output_file}..."
+      if [ "${continue}" == "1" ]; then
+        log "Continuing at chapter ${continueAt}:"
+      fi
     fi
     chapternum=1
+    #start progressbar for loglevel 0 and 1
+    if [ "$((${loglevel} < 2))" == "1" ]; then
+      progressbar 0 ${chaptercount}
+    fi
     # We pipe the metadata_file in read.
     # Example of the section that we are interested in:
     #
@@ -559,7 +622,9 @@ do
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
-          log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
+          if [ "$((${loglevel} > 1))" == "1" ]; then
+            log "Splitting chapter ${chapternum}/${chaptercount} start:${chapter_start%?}(s) end:${chapter_end}(s)"
+          fi
           </dev/null ffmpeg -loglevel quiet \
             -nostats \
             -ss "${chapter_start%?}" \
@@ -579,6 +644,9 @@ do
             -f ${container} \
             "${chapter_file}"
           # -----
+          if [ "$((${loglevel} < 2))" == "1" ]; then
+            progressbar ${chapternum} ${chaptercount}
+          fi
           # OK lets get what need for the next chapter in the Playlist m3u file.
           # Playlist creation.
           duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
@@ -591,7 +659,9 @@ do
         # Add the cover art to m4a and m4b file types.
         if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
           mp4art -q --add "${cover_file}" "${chapter_file}"
-          log "Added cover art to ${chapter_title}"
+          if [ "$((${loglevel} > 1))" == "1" ]; then
+            log "Added cover art to ${chapter_title}"
+          fi
         fi
 
       fi
@@ -599,14 +669,21 @@ do
 
     # Clean up of working directory stuff.
     rm "${output_file}"
-    log "Done creating chapters for ${output_directory}."
+    if [ "$((${loglevel} > 1))" == "1" ]; then
+      log "Done creating chapters for ${output_directory}."
+    else
+      #ending progress bar
+      echo ""
+    fi
   else
     # Perform file tasks on output file.
     # ----
     # Add the cover art to m4a and m4b file types.
     if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
       mp4art -q --add "${cover_file}" "${output_file}"
-      log "Added cover art to ${title}.${extension}"
+      if [ "$((${loglevel} > 1))" == "1" ]; then
+        log "Added cover art to ${title}.${extension}"
+      fi
     fi
     if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
       ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${title}.chapters.txt"
@@ -616,14 +693,18 @@ do
 
   # -----
   # Announce that we have completed the transcode
-  log "Complete ${title}"
+  if [ "$((${loglevel} > 0))" == "1" ]; then
+    log "Complete ${title}"
+  fi
   # Lastly get rid of any extra stuff.
   rm "${metadata_file}"
 
   # Move the aax file if the decode is completed and the --complete_dir is set to a valid location.
   # Check the target dir for if set if it is writable
   if [[ "x${completedir}" != "x"  ]]; then
-    log "Moving Transcoded ${aax_file} to ${completedir}"
+    if [ "$((${loglevel} > 0))" == "1" ]; then
+      log "Moving Transcoded ${aax_file} to ${completedir}"
+    fi
     mv "${aax_file}" "${completedir}"
   fi
 
