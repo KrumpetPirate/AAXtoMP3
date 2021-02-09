@@ -51,7 +51,9 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
 * **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
 * **--level &lt;COMPRESSIONLEVEL&gt;**      Set compression level. May be given for mp3, flac and opus.
-
+* **--dir-naming-scheme &lt;STRING&gt;**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+* **--file-naming-scheme &lt;STRING&gt;**     Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+* **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
@@ -118,6 +120,24 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * Default out put directory is the base directory of each file listed. Plus the genre, Artist and Title of the Audio Book.
 * The default codec is mp3
 * The default output is by chapter.
+
+### Custom naming scheme
+The following flags can modify the default naming scheme:
+* **--dir-naming-scheme**     
+* **--file-naming-scheme**    
+* **--chapter-naming-scheme** 
+Each flag takes a string as argument. If the string contains a variable defined in the script (eg. artist, title, chapter, narrator...), the corresponding value is used.
+The default options correspond to the following flags:
+* `--dir-naming-scheme '$genre/$artist/$title'`
+* `--file-naming-scheme '$title'`
+* `--chapter-naming-scheme '$title-$(printf %0${#chaptercount}d $chapternum) $chapter'`
+* If a command substitution is present in the passed string, (for example `$(printf %0${#chaptercount}d $chapternum)`, used to pad with zeros the chapter number), the commands are executed.
+So you can use `--dir-naming-scheme '$(date +%Y)/$artist'`, but using `--file-naming-scheme '$(rm -rf /)'` is a really bad idea. Be careful.
+* You can use basic text, like `--dir-naming-scheme 'Converted/$title'`
+* You can also use shell variables as long as you escape them properly: `CustomGenre=Horror ./AAXtoMP3 --dir-naming-scheme "$CustomGenre/\$artist/\$title" *.aax`
+* If you want shorter chapter names, use `--chapter-naming-scheme '$(printf %0${#chaptercount}d $chapternum) $chapter'`: only chapter number and chapter name
+* If you want to append the narrator name to the title, use `--dir-naming-scheme '$genre/$artist/$title-$narrator' --file-naming-scheme '$title-$narrator'`
+* If you don't want to have the books separated by author, use `--dir-naming-scheme '$genre/$title'`
 
 ### Installing Dependencies.
 #### FFMPEG,FFPROBE

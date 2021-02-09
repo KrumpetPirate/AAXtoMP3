@@ -579,16 +579,20 @@ do
         fi
         chapter_file="${output_directory}/${chapter_title}.${extension}"
 
-        # the ID3 tags must only be specified for *.mp3 files,
-        # the other container formats come with their own
-        # tagging mechanisms.
-        id3_version_param=""
-        if test "${extension}" = "mp3"; then
-          id3_version_param="-id3v2_version 3"
+        # Since the .aax file allready got converted we can use
+        # -acodec copy, which is much faster than a reencodation.
+        # Since there is an issue when using copy on flac, where
+        # the duration of the chapters gets shown as if they where
+        # as long as the whole audiobook.
+        chapter_codec=""
+        if test "${extension}" = "flac"; then
+          chapter_codec="flac "${compression_level_param}""
+        else
+          chapter_codec="copy"
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapterNameScheme chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapterNameScheme chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
@@ -601,8 +605,7 @@ do
             -i "${cover_file}" \
             -map 0:0 \
             -map 1:0 \
-            -acodec "${codec}" ${id3_version_param} \
-            ${compression_level_param} \
+            -acodec ${chapter_codec} \
             -metadata:s:v title="Album cover" \
             -metadata:s:v comment="Cover (Front)" \
             -metadata track="${chapternum}" \
