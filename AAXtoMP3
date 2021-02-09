@@ -555,7 +555,7 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end id3_version_param chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
