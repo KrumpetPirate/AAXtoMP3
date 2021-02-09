@@ -5,13 +5,14 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>] {FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>] [--stem <STEM>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
 mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
+stem=                       # Optional stem for simple output file naming.
 completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
@@ -45,6 +46,8 @@ while true; do
     -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
+                      # Use a simple STEM-NNN file naming scheme.
+    -S | --stem       ) stem="$2";                                                      shift 2 ;;
                       # Move the AAX file to a new directory when decoding is complete.
     -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
@@ -418,7 +421,11 @@ do
   else
     output_directory="$(dirname "${aax_file}")/${genre}/${artist}/${title}"
   fi
-  output_file="${output_directory}/${title}.${extension}"
+  if [ "x${stem}" != "x" ] ; then
+    output_file="${output_directory}/${stem}.${extension}"
+  else
+    output_file="${output_directory}/${title}.${extension}"
+  fi
   bitrate="$(get_bitrate)k"
   album_artist="$(get_metadata_value album_artist)"
   album="$(get_metadata_value album)"
@@ -501,9 +508,13 @@ do
   # for more detail
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
-    playlist_file="${output_directory}/${title}.m3u"
+    if [[ "x${stem}" != "x"  ]]; then
+      playlist_file="${output_directory}/${stem}.m3u"
+    else
+      playlist_file="${output_directory}/${title}.m3u"
+    fi
     if [ "${continue}" == "0" ]; then
-      log "Creating PlayList ${title}.m3u"
+      log "Creating PlayList ${playlist_file}"
       echo '#EXTM3U' > "${playlist_file}"
     fi
 
@@ -539,8 +550,14 @@ do
 
         # The formatting of the chapters names and the file names.
         # Chapter names are used in a few place.
-        chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
-        chapter_file="${output_directory}/${chapter_title}.${extension}"
+        chapter_nnn=$(printf %0${#chaptercount}d $chapternum)
+        chapter_title="${title}-${chapter_nnn} ${chapter}"
+        if [[ "x${stem}" != "x"  ]]; then
+          chapter_basename="${stem}-${chapter_nnn}"
+        else
+          chapter_basename="${chapter_title}"
+        fi
+        chapter_file="${output_directory}/${chapter_basename}.${extension}"
 
         # Since the .aax file allready got converted we can use
         # -acodec copy, which is much faster than a reencodation.
@@ -555,7 +572,7 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapter_title chapter_basename chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
@@ -583,7 +600,7 @@ do
           # Playlist creation.
           duration=$(echo "${chapter_end} - ${chapter_start%?}" | bc)
           echo "#EXTINF:${duration%.*},${title} - ${chapter}" >>  "${playlist_file}"
-          echo "${chapter_title}.${extension}" >> "${playlist_file}"
+          echo "${chapter_basename}.${extension}" >> "${playlist_file}"
         fi
         chapternum=$((chapternum + 1 ))
 
