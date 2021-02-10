@@ -188,7 +188,7 @@ brew install gnu-sed
 brew install grep
 ```
 
-#### mp4art
+#### mp4art/mp4chaps
 _Note: This is an optional dependency._
 
 __Ubuntu, Linux Mint, Debian__
@@ -200,13 +200,30 @@ __CentOS, RHEL & Fedora__
 ```
 # CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
 yum install mp4v2-utils
-
 ```
 __MacOS__
 ```
 brew install mp4v2
 ```
- 
+
+#### mediainfo
+_Note: This is an optional dependency._
+
+__Ubuntu, Linux Mint, Debian__
+```
+sudo apt-get update
+sudo apt-get install mediainfo
+```
+__CentOS, RHEL & Fedora__
+```
+yum install mediainfo
+```
+__MacOS__
+```
+brew install mediainfo
+```
+
+
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
 use their own encryption key (fetched from Audible servers) to decrypt the
