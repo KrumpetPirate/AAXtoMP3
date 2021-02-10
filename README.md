@@ -56,7 +56,6 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **-l** or **--loglevel &lt;LOGLEVEL&gt;** Set loglevel: 0 = progress only, 1 (default) = more information, output of chapter splitting progress is limitted to a progressbar, 2 = more information, especially on chapter splitting, 3 = debug mode
 
 
-
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
 
