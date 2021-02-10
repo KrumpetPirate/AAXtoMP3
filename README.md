@@ -51,9 +51,11 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **-c** or **--chaptered** Output a single file per chapter. The `--chaptered` will only work if it follows the `--aac -e:m4a -e:m4b --flac` options.
 * **--continue &lt;CHAPTERNUMBER&gt;**      If the splitting into chapters gets interrupted (e.g. by a weak battery on your laptop) you can go on where the process got interrupted. Just delete the last chapter (which was incompletely generated) and redo the task with "--continue &lt;CHAPTERNUMBER&gt;" where CHAPTERNUMBER is the chapter that got interrupted.
 * **--level &lt;COMPRESSIONLEVEL&gt;**      Set compression level. May be given for mp3, flac and opus.
+* **-l** or **--loglevel &lt;LOGLEVEL&gt;** Set loglevel: 0 = progress only, 1 (default) = more information, output of chapter splitting progress is limitted to a progressbar, 2 = more information, especially on chapter splitting, 3 = debug mode
 * **--dir-naming-scheme &lt;STRING&gt;** or **-D**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+
 
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
