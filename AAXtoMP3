@@ -5,7 +5,7 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>]{FILES} [--loglevel <LOGLEVEL>]\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>] [--keep-author <N>] [--author <AUTHOR>] [--loglevel <LOGLEVEL>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -19,6 +19,8 @@ loglevel=1                  # Loglevel: 0: Show progress only; 1: default; 2: a 
 noclobber=0                 # Default off, clobber only if flag is enabled
 continue=0                  # Default off, If set Transcoding is skipped and chapter splitting starts at chapter continueAt.
 continueAt=1                # Optional chapter to continue splitting the chapters.
+keepArtist=-1               # Default off, if set change author metadata to use the passed argument as field
+authorOverride=             # Override the author, ignoring the metadata           
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -61,6 +63,10 @@ while true; do
     --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Compression level
     --level           ) level="$2";                                                     shift 2 ;;
+                      # Keep author number n
+    --keep-author     ) keepArtist="$2";                                                shift 2 ;;
+                      # Author override
+    --author          ) authorOverride="$2";                                            shift 2 ;;
                       # Command synopsis.
     -h | --help       ) printf "$usage" $0 ;                                            exit ;;
                       # Standard flag signifying the end of command line processing.
@@ -170,7 +176,7 @@ progressbar() {
   echo -ne "Chapter splitting: |$progressbar| $print_percentage% ($part/$total chapters)\r"
 }
 # Print out what we have already after command line processing.
-debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code
+debug_vars "Command line options as set" codec extension mode container targetdir completedir auth_code keepArtist authorOverride
 
 # ========================================================================
 # Variable validation
@@ -450,7 +456,22 @@ do
   # Make sure everything is a variable.  Simplifying Command interpretation
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
-  artist=$(get_metadata_value artist)
+  if [ "x${authorOverride}" != "x" ]; then
+    #Manual Override
+    artist="${authorOverride}"
+    album_artist="${authorOverride}"
+  else
+    if [ "${keepArtist}" != "-1" ]; then
+      # Choose artist from the one that are present in the metadata. Comma separated list of names
+      #                                                                 remove leading space;     'C. S. Lewis' -> 'C.S. Lewis'
+      artist="$(get_metadata_value artist | cut -d',' -f"$keepArtist" | $SED -E 's|^ ||g; s|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
+      album_artist="$(get_metadata_value album_artist | cut -d',' -f"$keepArtist" | $SED -E 's|^ ||g; s|\. +|\.|g; s|((\w+\.)+)|\1 |g')"
+    else
+      # The default
+      artist=$(get_metadata_value artist)
+      album_artist="$(get_metadata_value album_artist)"
+    fi
+  fi
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   title=${title:0:100}
   if [ "x${targetdir}" != "x" ] ; then
@@ -460,7 +481,6 @@ do
   fi
   output_file="${output_directory}/${title}.${extension}"
   bitrate="$(get_bitrate)k"
-  album_artist="$(get_metadata_value album_artist)"
   album="$(get_metadata_value album)"
   album_date="$(get_metadata_value date)"
   copyright="$(get_metadata_value copyright)"
