@@ -519,6 +519,7 @@ do
   # Make sure everything is a variable.  Simplifying Command interpretation
   save_metadata "${aax_file}"
   genre=$(get_metadata_value genre)
+<<<<<<< HEAD
   if [ "x${authorOverride}" != "x" ]; then
     #Manual Override
     artist="${authorOverride}"
@@ -537,6 +538,11 @@ do
   fi
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   title=${title:0:100}
+=======
+  artist=$(get_metadata_value artist)
+  title=$(get_metadata_value title)
+  title=${title:0:128}
+>>>>>>> afb852fdf165c2aeb6f08d7583225e77adb940ab
   if [ "x${targetdir}" != "x" ] ; then
     output_directory="${targetdir}/${genre}/${artist}/${title}"
   else
