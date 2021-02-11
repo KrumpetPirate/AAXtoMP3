@@ -576,12 +576,13 @@ do
   debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher output_file metadata_file working_directory
 
   # Display the total length of the audiobook in format hh:mm:ss
+  # 10#$var force base-10 interpretation. By default it's base-8, so values like 08 or 09 are not octal numbers
   total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${aax_file} | cut -d . -f 1)"
   hours="$((total_length/3600))"
   if [ "$((hours<10))" = "1" ]; then hours="0$hours"; fi
-  minutes="$((total_length/60-60*hours))"
+  minutes="$((total_length/60-60*10#$hours))"
   if [ "$((minutes<10))" = "1" ]; then minutes="0$minutes"; fi
-  seconds="$((total_length-3600*hours-60*minutes))"
+  seconds="$((total_length-3600*10#$hours-60*10#$minutes))"
   if [ "$((seconds<10))" = "1" ]; then seconds="0$seconds"; fi
   log "Total length: $hours:$minutes:$seconds"
   
