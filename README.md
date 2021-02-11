@@ -54,6 +54,9 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **--keep-author &lt;FIELD&gt;**           If a book has multiple authors and you don't want all of them in the metadata, with this flag you can specify a specific author (1 is the first, 2 is the second...) to keep while discarding the others.
 * **--author &lt;AUTHOR&gt;**               Manually set the author metadata field, useful if you have multiple books of the same author but the name reported is different (eg. spacing, accents..). Has precedence over `--keep-author`.
 * **-l** or **--loglevel &lt;LOGLEVEL&gt;** Set loglevel: 0 = progress only, 1 (default) = more information, output of chapter splitting progress is limitted to a progressbar, 2 = more information, especially on chapter splitting, 3 = debug mode
+* **--dir-naming-scheme &lt;STRING&gt;** or **-D**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+* **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+* **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos.
 
 ### [AUTHCODE]
@@ -122,6 +125,27 @@ __Note:__ At least one of the above must be exist. The code must also match the 
 * The default codec is mp3
 * The default output is by chapter.
 
+### Custom naming scheme
+The following flags can modify the default naming scheme:
+* **--dir-naming-scheme** or **-D**  
+* **--file-naming-scheme** or **-F** 
+* **--chapter-naming-scheme** 
+
+Each flag takes a string as argument. If the string contains a variable defined in the script (eg. artist, title, chapter, narrator...), the corresponding value is used.
+The default options correspond to the following flags:
+* `--dir-naming-scheme '$genre/$artist/$title'`
+* `--file-naming-scheme '$title'`
+* `--chapter-naming-scheme '$title-$(printf %0${#chaptercount}d $chapternum) $chapter'`
+
+Additional notes:
+* If a command substitution is present in the passed string, (for example `$(printf %0${#chaptercount}d $chapternum)`, used to pad with zeros the chapter number), the commands are executed.
+So you can use `--dir-naming-scheme '$(date +%Y)/$artist'`, but using `--file-naming-scheme '$(rm -rf /)'` is a really bad idea. Be careful.
+* You can use basic text, like `--dir-naming-scheme 'Converted/$title'`
+* You can also use shell variables as long as you escape them properly: `CustomGenre=Horror ./AAXtoMP3 --dir-naming-scheme "$CustomGenre/\$artist/\$title" *.aax`
+* If you want shorter chapter names, use `--chapter-naming-scheme '$(printf %0${#chaptercount}d $chapternum) $chapter'`: only chapter number and chapter name
+* If you want to append the narrator name to the title, use `--dir-naming-scheme '$genre/$artist/$title-$narrator' --file-naming-scheme '$title-$narrator'`
+* If you don't want to have the books separated by author, use `--dir-naming-scheme '$genre/$title'`
+
 ### Installing Dependencies.
 #### FFMPEG,FFPROBE
 __Ubuntu, Linux Mint, Debian__
@@ -166,7 +190,7 @@ brew install gnu-sed
 brew install grep
 ```
 
-#### mp4art
+#### mp4art/mp4chaps
 _Note: This is an optional dependency._
 
 __Ubuntu, Linux Mint, Debian__
@@ -178,7 +202,6 @@ __CentOS, RHEL & Fedora__
 ```
 # CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
 yum install mp4v2-utils
-
 ```
 __MacOS__
 ```
@@ -203,6 +226,23 @@ Please note that right now audible-cli is in dev stage, so keep in mind that the
 naming scheme of the additional files, the flags syntax and other things can
 change without warning.
  
+#### mediainfo
+_Note: This is an optional dependency._
+
+__Ubuntu, Linux Mint, Debian__
+```
+sudo apt-get update
+sudo apt-get install mediainfo
+```
+__CentOS, RHEL & Fedora__
+```
+yum install mediainfo
+```
+__MacOS__
+```
+brew install mediainfo
+```
+
 
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
