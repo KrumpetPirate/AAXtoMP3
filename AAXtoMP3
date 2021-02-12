@@ -5,13 +5,23 @@
 # Command Line Options
 
 # Usage Synopsis.
-usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]\n[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]\n[--target_dir <PATH>] [--complete_dir <PATH>] [--validate]\n[--continue <CHAPTERNUMBER>] [--keep-author <N>] [--author <AUTHOR>] [--loglevel <LOGLEVEL>] {FILES}\n'
+usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRESSIONLEVEL>]
+[--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]
+[--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--loglevel <LOGLEVEL>]
+[--keep-author <N>] [--author <AUTHOR>] [--{dir,file,chapter}-naming-scheme <STRING>]  
+[--continue <CHAPTERNUMBER>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
 mode=chaptered              # Multi file output
 auth_code=                  # Required to be set via file or option.
 targetdir=                  # Optional output location.  Note default is basedir of AAX file.
+dirNameScheme=              # Custom directory naming scheme, default is $genre/$author/$title
+customDNS=0
+fileNameScheme=             # Custom file naming scheme, default is $title
+customFNS=0
+chapterNameScheme=          # Custom chapter naming scheme, default is '$title-$(printf %0${#chaptercount}d $chapternum) $chapter' (BookTitle-01 Chapter 1)
+customCNS=0
 completedir=                # Optional location to move aax files once the decoding is complete.
 container=mp3               # Just in case we need to change the container.  Used for M4A to M4B
 VALIDATE=0                  # Validate the input aax file(s) only.  No Transcoding of files will occur
@@ -47,6 +57,12 @@ while true; do
     -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
     -t | --target_dir ) targetdir="$2";                                                 shift 2 ;;
+                      # Use a custom directory naming scheme, with variables.
+    -D | --dir-naming-scheme ) dirNameScheme="$2"; customDNS=1;                         shift 2 ;;
+                      # Use a custom file naming scheme, with variables.
+    -F | --file-naming-scheme ) fileNameScheme="$2"; customFNS=1;                       shift 2 ;;
+                       # Use a custom chapter naming scheme, with variables.
+    --chapter-naming-scheme ) chapterNameScheme="$2"; customCNS=1;                      shift 2 ;;
                       # Move the AAX file to a new directory when decoding is complete.
     -C | --complete_dir ) completedir="$2";                                             shift 2 ;;
                       # Authorization code associate with the AAX file(s)
@@ -474,16 +490,11 @@ do
   fi
   title=$(get_metadata_value title | $SED 's/'\:'/'-'/g' | $SED 's/- /-/g' | xargs -0)
   title=${title:0:100}
-  if [ "x${targetdir}" != "x" ] ; then
-    output_directory="${targetdir}/${genre}/${artist}/${title}"
-  else
-    output_directory="$(dirname "${aax_file}")/${genre}/${artist}/${title}"
-  fi
-  output_file="${output_directory}/${title}.${extension}"
   bitrate="$(get_bitrate)k"
   album="$(get_metadata_value album)"
   album_date="$(get_metadata_value date)"
   copyright="$(get_metadata_value copyright)"
+
   # Get more tags with mediainfo
   if [[ $(type -P mediainfo) ]]; then
     narrator="$(get_metadata_value nrt)"
@@ -494,6 +505,30 @@ do
     description=""
     publisher=""
   fi
+
+  # Define the output_directory
+  if [ "${customDNS}" == "1" ]; then
+    currentDirNameScheme="$(eval echo "${dirNameScheme}")"
+  else
+    # The Default
+    currentDirNameScheme="${genre}/${artist}/${title}"
+  fi
+
+  # If we defined a target directory, use it. Otherwise use the location of the AAX file
+  if [ "x${targetdir}" != "x" ] ; then
+    output_directory="${targetdir}/${currentDirNameScheme}/"
+  else
+    output_directory="$(dirname "${aax_file}")/${currentDirNameScheme}/"
+  fi
+
+  # Define the output_file
+  if [ "${customFNS}" == "1" ]; then
+    currentFileNameScheme="$(eval echo "${fileNameScheme}")"
+  else
+    # The Default
+    currentFileNameScheme="${title}"
+  fi
+  output_file="${output_directory}/${currentFileNameScheme}.${extension}"
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
     log "Noclobber enabled but directory '${output_directory}' exists. Exiting to avoid overwriting"
@@ -511,15 +546,16 @@ do
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher currentDirNameScheme output_directory currentFileNameScheme output_file metadata_file working_directory
 
   # Display the total length of the audiobook in format hh:mm:ss
+  # 10#$var force base-10 interpretation. By default it's base-8, so values like 08 or 09 are not octal numbers
   total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${aax_file} | cut -d . -f 1)"
   hours="$((total_length/3600))"
   if [ "$((hours<10))" = "1" ]; then hours="0$hours"; fi
-  minutes="$((total_length/60-60*hours))"
+  minutes="$((total_length/60-60*10#$hours))"
   if [ "$((minutes<10))" = "1" ]; then minutes="0$minutes"; fi
-  seconds="$((total_length-3600*hours-60*minutes))"
+  seconds="$((total_length-3600*10#$hours-60*10#$minutes))"
   if [ "$((seconds<10))" = "1" ]; then seconds="0$seconds"; fi
   log "Total length: $hours:$minutes:$seconds"
   
@@ -576,10 +612,10 @@ do
   # for more detail
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
-    playlist_file="${output_directory}/${title}.m3u"
+    playlist_file="${output_directory}/${currentFileNameScheme}.m3u"
     if [ "${continue}" == "0" ]; then
       if [ "$((${loglevel} > 0))" == "1" ]; then
-        log "Creating PlayList ${title}.m3u"
+        log "Creating PlayList ${currentFileNameScheme}.m3u"
       fi
       echo '#EXTM3U' > "${playlist_file}"
     fi
@@ -622,7 +658,13 @@ do
 
         # The formatting of the chapters names and the file names.
         # Chapter names are used in a few place.
-        chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
+        # Define the chapter_file
+        if [ "${customCNS}" == "1" ]; then
+          chapter_title="$(eval echo "${chapterNameScheme}")"
+        else
+          # The Default
+          chapter_title="${title}-$(printf %0${#chaptercount}d $chapternum) ${chapter}"
+        fi
         chapter_file="${output_directory}/${chapter_title}.${extension}"
 
         # Since the .aax file allready got converted we can use
@@ -638,7 +680,7 @@ do
         fi
 
         # Big Long chapter debug
-        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapter_title chapter_file
+        debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapterNameScheme chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
           # Extract chapter by time stamps start and finish of chapter.
           # This extracts based on time stamps start and end.
@@ -674,16 +716,6 @@ do
           echo "${chapter_title}.${extension}" >> "${playlist_file}"
         fi
         chapternum=$((chapternum + 1 ))
-
-        # ----
-        # Add the cover art to m4a and m4b file types.
-        if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
-          mp4art -q --add "${cover_file}" "${chapter_file}"
-          if [ "$((${loglevel} > 1))" == "1" ]; then
-            log "Added cover art to ${chapter_title}"
-          fi
-        fi
-
       fi
     done 9< "$metadata_file"
 
@@ -698,15 +730,9 @@ do
   else
     # Perform file tasks on output file.
     # ----
-    # Add the cover art to m4a and m4b file types.
-    if [[ ${container} == "mp4" && $(type -P mp4art) ]]; then
-      mp4art -q --add "${cover_file}" "${output_file}"
-      if [ "$((${loglevel} > 1))" == "1" ]; then
-        log "Added cover art to ${title}.${extension}"
-      fi
-    fi
+    # ffmpeg seems to copy only chapter position, not chapter names.
     if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
-      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${title}.chapters.txt"
+      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${fileNameScheme}.chapters.txt"
       mp4chaps -i "${output_file}"
     fi
   fi
