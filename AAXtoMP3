@@ -679,6 +679,17 @@ do
           chapter_codec="copy"
         fi
 
+        #Since there seems to be a bug in some older versions of ffmpeg, which makes, that -ss and -to
+        #have to be apllied to the output file, this makes, that -ss and -to get applied on the input for
+        #ffmpeg version 4+ and on the output for all older versions.
+        split_input=""
+        split_output=""
+        if [ "$(($(ffmpeg -version | head -1 | cut -d \  -f 3 | cut -d . -f 1) > 3))" = "1" ]; then
+          split_input="-ss ${chapter_start%?} -to ${chapter_end}"
+        else
+          split_output="-ss ${chapter_start%?} -to ${chapter_end}"
+        fi
+
         # Big Long chapter debug
         debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapterNameScheme chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
@@ -689,10 +700,10 @@ do
           fi
           </dev/null ffmpeg -loglevel quiet \
             -nostats \
-            -ss "${chapter_start%?}" \
-            -to "${chapter_end}" \
+            ${split_input} \
             -i "${output_file}" \
             -i "${cover_file}" \
+            ${split_output} \
             -map 0:0 \
             -map 1:0 \
             -acodec ${chapter_codec} \
