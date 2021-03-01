@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# ===Note for contributors========================================================================================================================
+
+# This script interactively asks the user for the options to call AAXtoMP3 with. This first version does not include all options of AAXtoMP3
+# since I tried to keep the dialog short, but I added an --advanced option, which is unused right now, but might be used in the future to add
+# more options which only show up if explicitely wanted.
+# If you want to add functionality please consider, whether the functionality you add might belong to the advanced options.
+
+# ===Variables====================================================================================================================================
+
+# Usage synopsis
+usage=$'\nUsage: interactiveAAXtoMP3 [--advanced] [--help]\n'
+# Help mesaage
+help=$'\nUsage: interactiveAAXtoMP3 [--advanced] [--help]\n
+--advanced	More options
+--help		Print this message\n'
+summery=""         # This will contain a summery of the options allready set.
+call="./AAXtoMP3"  # This will contain the call for AAXtoMP3.
+isnum='^[0-9]+$'   # This is needed to check whether a variable is a number.
+advanced=0         # Toggles Advanced options on or off.
+
+# ===Options======================================================================================================================================
+
+while true; do
+  case "$1" in
+                      # Advanced options.
+    -a | --advanced   ) advanced=1;                                                                                  shift ;;
+                      # Command synopsis.
+    -h | --help       ) echo -e "$help";                                                                            exit ;;
+                      # Anything else stops command line processing.
+    *                 ) echo -e "$usage";                                                                            exit ;;
+  esac
+done
+
+# ===Get options for AAXtoMP3=====================================================================================================================
+
+# ===Codec===
+while true; do
+  clear;
+  read -p "codec (mp3/m4a/m4b/flac/aac/opus): " codec
+  if [[ "$codec" = "mp3" ]]; then summery="$summery""codec: $codec"; call="$call -e:mp3"; break
+  elif [[ "$codec" = "m4a" ]]; then summery="$summery""codec: $codec"; call="$call -e:m4a"; break
+  elif [[ "$codec" = "m4b" ]]; then summery="$summery""codec: $codec"; call="$call -e:m4b"; break
+  elif [[ "$codec" = "flac" ]]; then summery="$summery""codec: $codec"; call="$call --flac"; break
+  elif [[ "$codec" = "aac" ]]; then summery="$summery""codec: $codec"; call="$call --aac"; break
+  elif [[ "$codec" = "opus" ]]; then summery="$summery""codec: $codec"; call="$call --opus"; break
+  fi
+done
+
+# ===Compression===
+while true; do
+  clear; echo -e "$summery"
+  if [[ "$codec" = "mp3" ]]; then maxlevel=9
+  elif [[ "$codec" = "flac" ]]; then maxlevel=12
+  elif [[ "$codec" = "opus" ]]; then maxlevel=10
+  else break
+  fi
+  read -p "compression level (0-$maxlevel): " compression
+  if [[ ${compression} =~ $isnum ]] && [[ "$((${compression} > -1))" == "1" ]] && [[ "$((${compression} < ${maxlevel}+1))" == "1" ]]; then
+    summery="$summery""\ncompression level: $compression"
+    call="$call --level $compression"
+    break
+  fi
+done
+
+# ===Chapters===
+while true; do
+  clear; echo -e "$summery"
+  read -p "chapters (yes/no/chapternumber to continue with): " chapters
+  if [[ ${chapters} =~ $isnum ]]; then summery="$summery""\nchapters: $chapters"; call="$call -c --continue ${chapters}"; break
+  elif [[ "$chapters" = "yes" ]] ; then summery="$summery""\nchapters: $chapters"; call="$call -c"; break
+  elif [[ "$chapters" = "no" ]] ; then summery="$summery""\nchapters: $chapters"; call="$call -s"; break
+  fi
+done
+
+# ===Authcode===
+if ! [ -r .authcode ] || [ -r ~/.authcode ]; then
+  clear; echo -e "$summery"
+  read -p "Authcode: " authcode
+  summery="$summery""\nauthcode: $authcode"
+  call="$call -A $authcode"
+fi
+
+# ===Loglevel===
+while true; do
+  clear; echo -e "$summery"
+  read -p "loglevel (0/1/2/3): " loglevel
+  if [[ ${loglevel} =~ $isnum ]] && [[ "$((${loglevel} > -1))" == "1" ]] && [[ "$((${loglevel} < 4))" == "1" ]]; then
+    summery="$summery""\nloglevel: $loglevel"
+    call="$call -l $loglevel"
+    break
+  fi
+done
+
+# ===File===
+clear; echo -e "$summery"
+read -p "aax-file: " file
+summery="$summery""\naax-file: $file"
+call="$call $(echo $file | sed "s;~;$HOME;")"
+
+# ===Summerize chosen options and call AAXtoMP3===================================================================================================
+
+# ===Summery===
+clear; echo -e "$summery\n"
+echo -e "$call\n"
+# -----
+
+# ===Call AAXtoMP3===
+$call
