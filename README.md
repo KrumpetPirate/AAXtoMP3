@@ -32,6 +32,10 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 ```
 bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESSIONLEVEL>] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
 ```
+or if you want to get guided through the options
+```
+bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
+```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
