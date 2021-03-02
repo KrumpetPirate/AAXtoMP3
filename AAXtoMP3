@@ -742,7 +742,7 @@ do
     # ----
     # ffmpeg seems to copy only chapter position, not chapter names.
     if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
-      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${fileNameScheme}.chapters.txt"
+      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${currentFileNameScheme}.chapters.txt"
       mp4chaps -i "${output_file}"
     fi
   fi
