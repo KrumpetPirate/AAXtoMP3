@@ -9,29 +9,46 @@
 
 # ===Variables====================================================================================================================================
 
-# Usage synopsis
-usage=$'\nUsage: interactiveAAXtoMP3 [--advanced] [--help]\n'
 # Help mesaage
 help=$'\nUsage: interactiveAAXtoMP3 [--advanced] [--help]\n
 --advanced	More options
 --help		Print this message\n'
-summery=""         # This will contain a summery of the options allready set.
+summary=""         # This will contain a summary of the options allready set.
 call="./AAXtoMP3"  # This will contain the call for AAXtoMP3.
-isnum='^[0-9]+$'   # This is needed to check whether a variable is a number.
-advanced=0         # Toggles Advanced options on or off.
+advanced=0         # Toggles advanced options on or off.
 
 # ===Options======================================================================================================================================
 
 while true; do
   case "$1" in
-                      # Advanced options.
-    -a | --advanced   ) advanced=1;                                                                                  shift ;;
-                      # Command synopsis.
-    -h | --help       ) echo -e "$help";                                                                            exit ;;
-                      # Anything else stops command line processing.
-    *                 ) echo -e "$usage";                                                                            exit ;;
+                     # Advanced options.
+    -a | --advanced  ) advanced=1;                                                                                  shift ;;
+                     # Command synopsis.
+    -h | --help      ) echo -e "$help";                                                                             exit ;;
+                     # Anything else stops command line processing.
+    *                )                                                                                              break ;;
   esac
 done
+
+# ===Cross platform compatible use grep and sed===================================================================================================
+
+# ===Detect which annoying version of grep we have===
+GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+if ! [[ $(type -P "$GREP") ]]; then
+  echo "$GREP (GNU grep) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install grep"
+  exit 1
+fi
+
+# ===Detect which annoying version of sed we have===
+SED=$(sed --version 2>&1 | $GREP -q GNU && echo "sed" || echo "gsed")
+if ! [[ $(type -P "$SED") ]]; then
+  echo "$SED (GNU sed) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install gnu-sed"
+  exit 1
+fi
 
 # ===Get options for AAXtoMP3=====================================================================================================================
 
@@ -39,26 +56,28 @@ done
 while true; do
   clear;
   read -p "codec (mp3/m4a/m4b/flac/aac/opus): " codec
-  if [[ "$codec" = "mp3" ]]; then summery="$summery""codec: $codec"; call="$call -e:mp3"; break
-  elif [[ "$codec" = "m4a" ]]; then summery="$summery""codec: $codec"; call="$call -e:m4a"; break
-  elif [[ "$codec" = "m4b" ]]; then summery="$summery""codec: $codec"; call="$call -e:m4b"; break
-  elif [[ "$codec" = "flac" ]]; then summery="$summery""codec: $codec"; call="$call --flac"; break
-  elif [[ "$codec" = "aac" ]]; then summery="$summery""codec: $codec"; call="$call --aac"; break
-  elif [[ "$codec" = "opus" ]]; then summery="$summery""codec: $codec"; call="$call --opus"; break
-  fi
+  case "$codec" in
+    mp3   ) summary="$summary""codec: $codec"; call="$call -e:mp3"; break;;
+    m4a   ) summary="$summary""codec: $codec"; call="$call -e:m4a"; break;;
+    m4b   ) summary="$summary""codec: $codec"; call="$call -e:m4b"; break;;
+    flac  ) summary="$summary""codec: $codec"; call="$call --flac"; break;;
+    aac   ) summary="$summary""codec: $codec"; call="$call --aac";  break;;
+    opus  ) summary="$summary""codec: $codec"; call="$call --opus"; break;;
+  esac
 done
 
 # ===Compression===
 while true; do
-  clear; echo -e "$summery"
-  if [[ "$codec" = "mp3" ]]; then maxlevel=9
-  elif [[ "$codec" = "flac" ]]; then maxlevel=12
-  elif [[ "$codec" = "opus" ]]; then maxlevel=10
-  else break
-  fi
+  clear; echo -e "$summary"
+  case "$codec" in
+    mp3   ) maxlevel=9;;
+    flac  ) maxlevel=12;;
+    opus  ) maxlevel=10;;
+    *     ) break;;
+  esac
   read -p "compression level (0-$maxlevel): " compression
-  if [[ ${compression} =~ $isnum ]] && [[ "$((${compression} > -1))" == "1" ]] && [[ "$((${compression} < ${maxlevel}+1))" == "1" ]]; then
-    summery="$summery""\ncompression level: $compression"
+  if [[ $compression =~ ^[0-9]+$ ]] && [[ "$compression" -ge "0" ]] && [[ "$compression" -le "$maxlevel" ]]; then
+    summary="$summary""\ncompression level: $compression"
     call="$call --level $compression"
     break
   fi
@@ -66,45 +85,45 @@ done
 
 # ===Chapters===
 while true; do
-  clear; echo -e "$summery"
+  clear; echo -e "$summary"
   read -p "chapters (yes/no/chapternumber to continue with): " chapters
-  if [[ ${chapters} =~ $isnum ]]; then summery="$summery""\nchapters: $chapters"; call="$call -c --continue ${chapters}"; break
-  elif [[ "$chapters" = "yes" ]] ; then summery="$summery""\nchapters: $chapters"; call="$call -c"; break
-  elif [[ "$chapters" = "no" ]] ; then summery="$summery""\nchapters: $chapters"; call="$call -s"; break
-  fi
+  case "$chapters" in
+    ^[0-9]+$  ) summary="$summary""\nchapters: $chapters"; call="$call -c --continue ${chapters}"; break;;
+    yes       ) summary="$summary""\nchapters: $chapters"; call="$call -c"; break;;
+    no        ) summary="$summary""\nchapters: $chapters"; call="$call -s"; break;;
+  esac
 done
 
 # ===Authcode===
 if ! [ -r .authcode ] || [ -r ~/.authcode ]; then
-  clear; echo -e "$summery"
+  clear; echo -e "$summary"
   read -p "Authcode: " authcode
-  summery="$summery""\nauthcode: $authcode"
+  summary="$summary""\nauthcode: $authcode"
   call="$call -A $authcode"
 fi
 
 # ===Loglevel===
 while true; do
-  clear; echo -e "$summery"
+  clear; echo -e "$summary"
   read -p "loglevel (0/1/2/3): " loglevel
-  if [[ ${loglevel} =~ $isnum ]] && [[ "$((${loglevel} > -1))" == "1" ]] && [[ "$((${loglevel} < 4))" == "1" ]]; then
-    summery="$summery""\nloglevel: $loglevel"
+  if [[ $loglevel =~ ^[0-9]+$ ]] && [[ "$loglevel" -ge "0" ]] && [[ "$loglevel" -le "3" ]]; then
+    summary="$summary""\nloglevel: $loglevel"
     call="$call -l $loglevel"
     break
   fi
 done
 
 # ===File===
-clear; echo -e "$summery"
+clear; echo -e "$summary"
 read -p "aax-file: " file
-summery="$summery""\naax-file: $file"
-call="$call $(echo $file | sed "s;~;$HOME;")"
+summary="$summary""\naax-file: $file"
+call="$call $(echo $file | $SED "s;~;$HOME;")"
 
 # ===Summerize chosen options and call AAXtoMP3===================================================================================================
 
-# ===Summery===
-clear; echo -e "$summery\n"
+# ===Summary===
+clear; echo -e "$summary\n"
 echo -e "$call\n"
-# -----
 
 # ===Call AAXtoMP3===
 $call
