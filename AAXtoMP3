@@ -605,11 +605,10 @@ do
     fi
     </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
   fi
+
   # -----
-  # OK now spit the file if that's what you want.
-  # If we want multiple file we take the big mp3 and split it by chapter.
-  # Not all audio encodings make sense with multiple chapter outputs.  See options section
-  # for more detail
+  # If mode=chaptered, split the big converted file by chapter and remove it afterwards.
+  # Not all audio encodings make sense with multiple chapter outputs (see options section)
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
     playlist_file="${output_directory}/${currentFileNameScheme}.m3u"
