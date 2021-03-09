@@ -60,16 +60,16 @@ lastauthcode=""
 lastloglevel="1"
 
 # ===Get Values from last time===
-if [ -f "interactive.txt" ]; then
-  for ((i=1;i<=$(wc -l interactive.txt | cut -d " " -f 1);i++)) do
-    line=$(head -$i interactive.txt | tail -1)
+if [ -f ".interactivesave" ]; then
+  for ((i=1;i<=$(wc -l .interactivesave | cut -d " " -f 1);i++)) do
+    line=$(head -$i .interactivesave | tail -1)
     case $(echo $line | cut -d " " -f 1 | $SED 's/.$//') in
       codec        ) lastcodec="$(echo $line | cut -d " " -f 2)";;
       compression  ) lastcompression="$(echo $line | cut -d " " -f 2)";;
       chapters     ) lastchapters="$(echo $line | cut -d " " -f 2)";;
       authcode     ) lastauthcode="$(echo $line | cut -d " " -f 2)";;
       loglevel     ) lastloglevel="$(echo $line | cut -d " " -f 2)";;
-      *            ) rm interactive.txt; exit 1;;
+      *            ) rm .interactivesave; exit 1;;
     esac
   done
 fi
@@ -153,7 +153,7 @@ clear; echo -e "$summary\n"
 echo -e "$call\n"
 
 # ===Save chosen options===
-echo -e $savefile | $SED "s;\ level:;:;" > interactive.txt
+echo -e $savefile | $SED "s;\ level:;:;" > .interactivesave
 
 # ===Call AAXtoMP3===
 $call
