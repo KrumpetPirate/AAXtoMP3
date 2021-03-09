@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+
+# ===Note for contributors========================================================================================================================
+
+# This script interactively asks the user for the options to call AAXtoMP3 with. This first version does not include all options of AAXtoMP3
+# since I tried to keep the dialog short, but I added an --advanced option, which is unused right now, but might be used in the future to add
+# more options which only show up if explicitely wanted.
+# If you want to add functionality please consider, whether the functionality you add might belong to the advanced options.
+
+# ===Variables====================================================================================================================================
+
+# Help message
+help=$'\nUsage: interactiveAAXtoMP3 [--advanced] [--help]\n
+--advanced	More options
+--help		Print this message\n'
+summary=""         # This will contain a summary of the options allready set.
+call="./AAXtoMP3"  # This will contain the call for AAXtoMP3.
+advanced=0         # Toggles advanced options on or off.
+
+# ===Options======================================================================================================================================
+
+while true; do
+  case "$1" in
+                     # Advanced options.
+    -a | --advanced  ) advanced=1;      shift ;;
+                     # Command synopsis.
+    -h | --help      ) echo -e "$help"; exit ;;
+                     # Anything else stops command line processing.
+    *                )                  break ;;
+  esac
+done
+
+# ===Cross platform compatible use grep and sed===================================================================================================
+
+# ===Detect which annoying version of grep we have===
+GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+if ! [[ $(type -P "$GREP") ]]; then
+  echo "$GREP (GNU grep) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install grep"
+  exit 1
+fi
+
+# ===Detect which annoying version of sed we have===
+SED=$(sed --version 2>&1 | $GREP -q GNU && echo "sed" || echo "gsed")
+if ! [[ $(type -P "$SED") ]]; then
+  echo "$SED (GNU sed) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install gnu-sed"
+  exit 1
+fi
+
+# ===Get options from last time===================================================================================================================
+
+# ===Set default values===
+lastcodec="mp3"
+lastcompression="4"
+lastchapters="yes"
+lastauthcode=""
+lastloglevel="1"
+
+# ===Get Values from last time===
+if [ -f ".interactivesave" ]; then
+  for ((i=1;i<=$(wc -l .interactivesave | cut -d " " -f 1);i++)) do
+    line=$(head -$i .interactivesave | tail -1)
+    case $(echo $line | cut -d " " -f 1 | $SED 's/.$//') in
+      codec        ) lastcodec="$(echo $line | cut -d " " -f 2)";;
+      compression  ) lastcompression="$(echo $line | cut -d " " -f 2)";;
+      chapters     ) lastchapters="$(echo $line | cut -d " " -f 2)";;
+      authcode     ) lastauthcode="$(echo $line | cut -d " " -f 2)";;
+      loglevel     ) lastloglevel="$(echo $line | cut -d " " -f 2)";;
+      *            ) rm .interactivesave; exit 1;;
+    esac
+  done
+fi
+
+# ===Get options for AAXtoMP3=====================================================================================================================
+
+# ===Codec===
+while true; do
+  clear;
+  read -e -p "codec (mp3/m4a/m4b/flac/aac/opus): " -i "$lastcodec" codec
+  case "$codec" in
+    mp3   ) summary="$summary""codec: $codec"; call="$call -e:mp3"; break;;
+    m4a   ) summary="$summary""codec: $codec"; call="$call -e:m4a"; break;;
+    m4b   ) summary="$summary""codec: $codec"; call="$call -e:m4b"; break;;
+    flac  ) summary="$summary""codec: $codec"; call="$call --flac"; break;;
+    aac   ) summary="$summary""codec: $codec"; call="$call --aac";  break;;
+    opus  ) summary="$summary""codec: $codec"; call="$call --opus"; break;;
+  esac
+done
+
+# ===Compression===
+while true; do
+  clear; echo -e "$summary"
+  case "$codec" in
+    mp3   ) maxlevel=9;;
+    flac  ) maxlevel=12;;
+    opus  ) maxlevel=10;;
+    *     ) break;;
+  esac
+  read -e -p "compression level (0-$maxlevel): " -i "$lastcompression" compression
+  if [[ $compression =~ ^[0-9]+$ ]] && [[ "$compression" -ge "0" ]] && [[ "$compression" -le "$maxlevel" ]]; then
+    summary="$summary""\ncompression level: $compression"
+    call="$call --level $compression"
+    break
+  fi
+done
+
+# ===Chapters===
+while true; do
+  clear; echo -e "$summary"
+  read -e -p "chapters (yes/no/chapternumber to continue with): " -i "$lastchapters" chapters
+  case "$chapters" in
+    ^[0-9]+$  ) summary="$summary""\nchapters: $chapters"; call="$call -c --continue ${chapters}"; break;;
+    yes       ) summary="$summary""\nchapters: $chapters"; call="$call -c"; break;;
+    no        ) summary="$summary""\nchapters: $chapters"; call="$call -s"; break;;
+  esac
+done
+
+# ===Authcode===
+if ! [ -r .authcode ] || [ -r ~/.authcode ]; then
+  clear; echo -e "$summary"
+  read -e -p "Authcode: " -i "$lastauthcode" authcode
+  summary="$summary""\nauthcode: $authcode"
+  call="$call -A $authcode"
+fi
+
+# ===Loglevel===
+while true; do
+  clear; echo -e "$summary"
+  read -e -p "loglevel (0/1/2/3): " -i "$lastloglevel" loglevel
+  if [[ $loglevel =~ ^[0-9]+$ ]] && [[ "$loglevel" -ge "0" ]] && [[ "$loglevel" -le "3" ]]; then
+    summary="$summary""\nloglevel: $loglevel"
+    call="$call -l $loglevel"
+    break
+  fi
+done
+
+# ===File===
+clear; echo -e "$summary"
+read -p "aax-file: " file
+file="${file%\'}" #remove suffix ' if file is given via drag'n'drop
+file="${file#\'}" #remove prefix ' if file is given via drag'n'drop
+savefile="$summary"
+summary="$summary""\naax-file: $file"
+call="$call $(echo $file | $SED "s;~;$HOME;")"
+
+# ===Summerize chosen options and call AAXtoMP3===================================================================================================
+
+# ===Summary===
+clear; echo -e "$summary\n"
+echo -e "$call\n"
+
+# ===Save chosen options===
+echo -e $savefile | $SED "s;\ level:;:;" > .interactivesave
+
+# ===Call AAXtoMP3===
+$call
