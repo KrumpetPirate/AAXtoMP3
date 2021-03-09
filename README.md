@@ -39,7 +39,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
-## Options
+## Options for AAXtoMP3
 * **-f** or **--flac**   Flac Encoding and as default produces a single file.
 * **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
@@ -62,6 +62,11 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 
+## Options for interactiveAAXtoMP3
+* **-a** or **--advanced** Get more options to choose. Not used right now.
+* **-h** or **--help** Get a help prompt.
+This script presents you the options you chose last time as default.
+When you get asked for the aax-file you may just drag'n'drop it to the terminal.
 
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
