@@ -199,7 +199,7 @@ debug_vars "Command line options as set" codec extension mode container targetdi
 
 # -----
 # Detect which annoying version of grep we have
-GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
+GREP=$(grep --version | grep -q -v FreeBSD | grep -q GNU && echo "grep" || echo "ggrep")
 if ! [[ $(type -P "$GREP") ]]; then
   echo "$GREP (GNU grep) is not in your PATH"
   echo "Without it, this script will break."
