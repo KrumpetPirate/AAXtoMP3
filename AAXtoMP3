@@ -610,7 +610,7 @@ do
 
   # Display the total length of the audiobook in format hh:mm:ss
   # 10#$var force base-10 interpretation. By default it's base-8, so values like 08 or 09 are not octal numbers
-  total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${aax_file} | cut -d . -f 1)"
+  total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aax_file}" | cut -d . -f 1)"
   hours="$((total_length/3600))"
   if [ "$((hours<10))" = "1" ]; then hours="0$hours"; fi
   minutes="$((total_length/60-60*10#$hours))"
@@ -681,11 +681,10 @@ do
       </dev/null ffmpeg -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
     fi
   fi
+
   # -----
-  # OK now spit the file if that's what you want.
-  # If we want multiple file we take the big mp3 and split it by chapter.
-  # Not all audio encodings make sense with multiple chapter outputs.  See options section
-  # for more detail
+  # If mode=chaptered, split the big converted file by chapter and remove it afterwards.
+  # Not all audio encodings make sense with multiple chapter outputs (see options section)
   if [ "${mode}" == "chaptered" ]; then
     # Playlist m3u support
     playlist_file="${output_directory}/${currentFileNameScheme}.m3u"
@@ -755,6 +754,17 @@ do
           chapter_codec="copy"
         fi
 
+        #Since there seems to be a bug in some older versions of ffmpeg, which makes, that -ss and -to
+        #have to be apllied to the output file, this makes, that -ss and -to get applied on the input for
+        #ffmpeg version 4+ and on the output for all older versions.
+        split_input=""
+        split_output=""
+        if [ "$(($(ffmpeg -version | $SED -E 's/[^0-9]*([0-9]).*/\1/g;1q') > 3))" = "1" ]; then
+          split_input="-ss ${chapter_start%?} -to ${chapter_end}"
+        else
+          split_output="-ss ${chapter_start%?} -to ${chapter_end}"
+        fi
+
         # Big Long chapter debug
         debug_vars "Chapter Variables:" cover_file chapter_start chapter_end chapternum chapter chapterNameScheme chapter_title chapter_file
         if [ "$((${continueAt} > ${chapternum}))" = "0" ]; then
@@ -765,11 +775,11 @@ do
           fi
           </dev/null ffmpeg -loglevel quiet \
             -nostats \
-            -ss "${chapter_start%?}" \
-            -to "${chapter_end}" \
+            ${split_input} \
             -i "${output_file}" \
             -i "${cover_file}" \
             ${extra_crop_cover} \
+            ${split_output} \
             -map 0:0 \
             -map 1:0 \
             -acodec ${chapter_codec} \
@@ -809,7 +819,7 @@ do
     # ----
     # ffmpeg seems to copy only chapter position, not chapter names.
     if [[ ${container} == "mp4" && $(type -P mp4chaps) ]]; then
-      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${fileNameScheme}.chapters.txt"
+      ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${currentFileNameScheme}.chapters.txt"
       mp4chaps -i "${output_file}"
     fi
   fi

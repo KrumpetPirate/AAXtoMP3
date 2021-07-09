@@ -32,10 +32,14 @@ Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.
 ```
 bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESSIONLEVEL>] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
 ```
+or if you want to get guided through the options
+```
+bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
+```
 
 * **&lt;AAX INPUT_FILES&gt;**... are considered input file(s), useful for batching!
 
-## Options
+## Options for AAXtoMP3
 * **-f** or **--flac**   Flac Encoding and as default produces a single file.
 * **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
@@ -58,6 +62,12 @@ bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESS
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos.
+
+## Options for interactiveAAXtoMP3
+* **-a** or **--advanced** Get more options to choose. Not used right now.
+* **-h** or **--help** Get a help prompt.
+This script presents you the options you chose last time as default.
+When you get asked for the aax-file you may just drag'n'drop it to the terminal.
 
 ### [AUTHCODE]
 **Your** Audible auth code (it won't correctly decode otherwise) (required).
