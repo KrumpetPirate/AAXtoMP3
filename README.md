@@ -218,6 +218,23 @@ __MacOS__
 brew install mp4v2
 ```
 
+#### mediainfo
+_Note: This is an optional dependency._
+
+__Ubuntu, Linux Mint, Debian__
+```
+sudo apt-get update
+sudo apt-get install mediainfo
+```
+__CentOS, RHEL & Fedora__
+```
+yum install mediainfo
+```
+__MacOS__
+```
+brew install mediainfo
+```
+
 ## Audible-cli integration
 Some information are not present in the AAX file. For example the chapters's
 title, additional chapters division (Opening and End credits, Copyright and
@@ -236,23 +253,6 @@ Please note that right now audible-cli is in dev stage, so keep in mind that the
 naming scheme of the additional files, the flags syntax and other things can
 change without warning.
  
-#### mediainfo
-_Note: This is an optional dependency._
-
-__Ubuntu, Linux Mint, Debian__
-```
-sudo apt-get update
-sudo apt-get install mediainfo
-```
-__CentOS, RHEL & Fedora__
-```
-yum install mediainfo
-```
-__MacOS__
-```
-brew install mediainfo
-```
-
 
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
