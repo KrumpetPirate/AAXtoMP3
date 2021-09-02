@@ -9,7 +9,7 @@ usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRE
 [--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]
 [--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--loglevel <LOGLEVEL>]
 [--keep-author <N>] [--author <AUTHOR>] [--{dir,file,chapter}-naming-scheme <STRING>]  
-[--use-audible-cli-data] [--continue <CHAPTERNUMBER>] {FILES}\n'
+[--use-audible-cli-data] [--aaxc] [--continue <CHAPTERNUMBER>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -32,6 +32,7 @@ continueAt=1                # Optional chapter to continue splitting the chapter
 keepArtist=-1               # Default off, if set change author metadata to use the passed argument as field
 authorOverride=             # Override the author, ignoring the metadata           
 audibleCli=0                # Default off, Use additional data gathered from mkb79/audible-cli
+aaxc=0                      # Use aaxc input file format, the default is the old aax.
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -80,6 +81,8 @@ while true; do
     --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Use additional data got with mkb79/audible-cli
     --use-audible-cli-data ) audibleCli=1;                                              shift ;;
+                      # Use aaxc input file format. Implies --use-audible-cli-data
+    --aaxc            ) aaxc=1; audibleCli=1;                                           shift ;;
                       # Compression level
     --level           ) level="$2";                                                     shift 2 ;;
                       # Keep author number n
@@ -440,7 +443,17 @@ validate_extra_files() {
   extra_eval_comm="$(eval echo ${extra_find_command})"
   set -e errexit
 
-  debug_vars "Audible-cli variables" extra_media_file extra_title extra_chapter_file extra_cover_file extra_find_command extra_eval_comm extra_dirname
+  if [[ "${aaxc}" == "1" ]]; then
+    extra_voucher="${extra_media_file}.voucher"
+    if [[ ! -r "${extra_voucher}" ]] ; then
+      log "ERROR File NOT Found: ${extra_voucher}"
+      return 1
+    fi
+    aaxc_key=$(jq -r '.content_license.license_response.key' extra_voucher)
+    aaxc_iv=$(jq -r '.content_license.license_response.iv' extra_voucher)
+  fi
+
+  debug_vars "Audible-cli variables" extra_media_file extra_title extra_chapter_file extra_cover_file extra_find_command extra_eval_comm extra_dirname extra_voucher aaxc_key aaxc_iv
 
   # Test for chapter file existence
   if [[ ! -r "${extra_chapter_file}" ]] ; then
