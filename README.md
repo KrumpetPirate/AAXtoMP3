@@ -18,6 +18,7 @@ Audible fails for some reason.
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
 * grep Some OS distributions do not have it installed.
 * sed Some OS versions will need to install gnu sed.
+* jq  Command-line JSON processor
 * mp4art used to add cover art to m4a and m4b files. Optional
 * mediainfo used to add additional media tags like narrator. Optional
 
