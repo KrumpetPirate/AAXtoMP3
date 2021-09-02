@@ -297,7 +297,8 @@ if [ -z $auth_code ]; then
   fi
 fi
 # No point going on if no authcode found.
-if [ -z $auth_code ]; then
+# If we use aaxc as input, we do not need it
+if [ -z $auth_code ] || [ "${aaxc}" = "0" ]; then
   echo "ERROR Missing authcode"
   echo "$usage"
   exit 1
@@ -390,8 +391,12 @@ validate_aax() {
   # Clear the errexit value we want to capture the output of the ffprobe below.
   set +e errexit
 
-  # Take a look at the aax file and see if it is valid.
-  output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
+  # Take a look at the aax file and see if it is valid. If the source file is aaxc, we give ffprobe additional flags
+  if [[ "${aaxc}" == "1" ]]; then
+    output="$(ffprobe -loglevel warning -audible_key "${aaxc_key}" -audible_iv "${aaxc_iv}" -i "${media_file}" 2>&1)"
+  else
+    output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
+  fi
 
   # If invalid then say something.
   if [[ $? != "0" ]] ; then
@@ -404,7 +409,11 @@ validate_aax() {
 
   # This is a big test only performed when the --validate switch is passed.
   if [[ "${VALIDATE}" == "1" ]]; then
-    output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
+    if [[ "${aaxc}" == "1" ]]; then
+      output="$(ffmpeg -hide_banner -audible_key ${aaxc_key} -audible_iv ${aaxc_iv} -i "${media_file}" -vn -f null - 2>&1)"
+    else
+      output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
+    fi
     if [[ $? != "0" ]] ; then
       log "ERROR: Invalid File: ${media_file}"
     else
@@ -444,13 +453,14 @@ validate_extra_files() {
   set -e errexit
 
   if [[ "${aaxc}" == "1" ]]; then
-    extra_voucher="${extra_media_file}.voucher"
+    # bash trick to get file w\o extention (delete from end to the first '.')
+    extra_voucher="${extra_media_file%.*}.voucher"
     if [[ ! -r "${extra_voucher}" ]] ; then
       log "ERROR File NOT Found: ${extra_voucher}"
       return 1
     fi
-    aaxc_key=$(jq -r '.content_license.license_response.key' extra_voucher)
-    aaxc_iv=$(jq -r '.content_license.license_response.iv' extra_voucher)
+    aaxc_key=$(jq -r '.content_license.license_response.key' "${extra_voucher}")
+    aaxc_iv=$(jq -r '.content_license.license_response.iv' "${extra_voucher}")
   fi
 
   debug_vars "Audible-cli variables" extra_media_file extra_title extra_chapter_file extra_cover_file extra_find_command extra_eval_comm extra_dirname extra_voucher aaxc_key aaxc_iv
@@ -529,17 +539,22 @@ do
   # It's just that if the validate option is set then we skip to next file.
   # If however validate is not set and we proceed with the script any errors will
   # case the script to stop.
+
+  # If the input file is aaxc, we need to first get the audible_key and audible_iv
+  # We get them in the function validate_extra_files
+
+  if [[ ${audibleCli} == "1" ]] ; then
+    # If we have additional files (obtained via audible-cli), be sure that they
+    # exists and they are in the correct location.
+    validate_extra_files "${aax_file}"
+  fi
+
   validate_aax "${aax_file}"
   if [[ ${VALIDATE} == "1" ]] ; then
     # Don't bother doing anything else with this file.
     continue
   fi
   
-  if [[ ${audibleCli} == "1" ]] ; then
-    # If we have additional files (obtained via audible-cli), be sure that they
-    # exists and they are in the correct location.
-    validate_extra_files "${aax_file}"
-  fi
 
   # -----
   # Make sure everything is a variable.  Simplifying Command interpretation
@@ -619,11 +634,19 @@ do
   # Big long DEBUG output. Fully describes the settings used for transcoding.
   # Note this is a long debug command. It's not critical to operation. It's purely for people debugging
   # and coders wanting to extend the script.
-  debug_vars "Book and Variable values" title auth_code mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher currentDirNameScheme output_directory currentFileNameScheme output_file metadata_file working_directory
+  debug_vars "Book and Variable values" title auth_code aaxc aaxc_key aaxc_iv mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher currentDirNameScheme output_directory currentFileNameScheme output_file metadata_file working_directory
+
+  # Set the needed params to decrypt the file. Needed in the main command as
+  # well as in the variable total_lenght
+  if [[ ${aaxc} == "1" ]] ; then
+    decrypt_param="-audible_key ${aaxc_key} -audible_iv ${aaxc_iv}"
+  else
+    decrypt_params="-activation_bytes ${auth_code}"
+  fi
 
   # Display the total length of the audiobook in format hh:mm:ss
   # 10#$var force base-10 interpretation. By default it's base-8, so values like 08 or 09 are not octal numbers
-  total_length="$(ffprobe -v error -activation_bytes "${auth_code}" -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aax_file}" | cut -d . -f 1)"
+  total_length="$(ffprobe -v error ${decrypt_param} -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${aax_file}" | cut -d . -f 1)"
   hours="$((total_length/3600))"
   if [ "$((hours<10))" = "1" ]; then hours="0$hours"; fi
   minutes="$((total_length/60-60*10#$hours))"
@@ -642,10 +665,10 @@ do
   if [ "${continue}" == "0" ]; then
     # This is the main work horse command.  This is the primary transcoder.
     # This is the primary transcode. All the heavy lifting is here.
-    debug 'ffmpeg -loglevel error -stats -activation_bytes "${auth_code}" -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
+    debug 'ffmpeg -loglevel error -stats ${decrypt_param} -i "${aax_file}" -vn -codec:a "${codec}" -ab ${bitrate} -map_metadata -1 -metadata title="${title}" -metadata artist="${artist}" -metadata album_artist="${album_artist}" -metadata album="${album}" -metadata date="${album_date}" -metadata track="1/1" -metadata genre="${genre}" -metadata copyright="${copyright}" "${output_file}"'
     </dev/null ffmpeg -loglevel error \
       -stats \
-      -activation_bytes "${auth_code}" \
+      ${decrypt_param} \
       -i "${aax_file}" \
       -vn \
       -codec:a "${codec}" \
