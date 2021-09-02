@@ -235,6 +235,14 @@ __MacOS__
 ```
 brew install mediainfo
 ```
+## AAXC files
+The AAXC format is a new Audible encryption format, meant to replace the old AAX.
+The encryption has been updated, and now to decrypt the file the authcode
+is not sufficient, we need two "keys" which are unique for each audiobook.
+Since getting those keys is not simple, for now the method used to get them
+is handled by the package audible-cli, that stores
+them in a file when downloading the aaxc file. This means that in order to
+decrypt the aaxc files, they must be downloaded with audible-cli.
 
 ## Audible-cli integration
 Some information are not present in the AAX file. For example the chapters's
@@ -254,7 +262,8 @@ chapters's title and an HQ cover: `audible download --all --aaxc --cover --cover
 To make AAXtoMP3 use the additional data, specify the **--use-audible-cli-data**
 flag: it expects the cover and the chapter files (and the voucher, if converting
 an aaxc file) to be in the same location of the AAX file.  The naming of these
-files must be the one set by audible-cli.
+files must be the one set by audible-cli. When converting aaxc files, the variable
+is automatically set, so be sure to follow the instructions in this paragraph.
 
 For more information on how to use the `audible-cli` package, check out the git page [audible-cli](https://github.com/mkb79/audible-cli).
 
