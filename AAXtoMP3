@@ -384,11 +384,7 @@ validate_aax() {
   set +e errexit
 
   # Take a look at the aax file and see if it is valid. If the source file is aaxc, we give ffprobe additional flags
-  if [[ "${aaxc}" == "1" ]]; then
-    output="$(ffprobe -loglevel warning -audible_key "${aaxc_key}" -audible_iv "${aaxc_iv}" -i "${media_file}" 2>&1)"
-  else
-    output="$(ffprobe -loglevel warning -activation_bytes ${auth_code} -i "${media_file}" 2>&1)"
-  fi
+  output="$(ffprobe -loglevel warning ${decrypt_param} -i "${media_file}" 2>&1)"
 
   # If invalid then say something.
   if [[ $? != "0" ]] ; then
@@ -401,11 +397,7 @@ validate_aax() {
 
   # This is a big test only performed when the --validate switch is passed.
   if [[ "${VALIDATE}" == "1" ]]; then
-    if [[ "${aaxc}" == "1" ]]; then
-      output="$(ffmpeg -hide_banner -audible_key ${aaxc_key} -audible_iv ${aaxc_iv} -i "${media_file}" -vn -f null - 2>&1)"
-    else
-      output="$(ffmpeg -hide_banner -activation_bytes ${auth_code} -i "${media_file}" -vn -f null - 2>&1)"
-    fi
+    output="$(ffmpeg -hide_banner ${decrypt_param} -i "${media_file}" -vn -f null - 2>&1)"
     if [[ $? != "0" ]] ; then
       log "ERROR: Invalid File: ${media_file}"
     else
@@ -541,6 +533,7 @@ do
     # If some previous file in the loop are aaxc, the $audibleCli variable has been overwritten, so we reset it to the original one
     audibleCli=$originalAudibleCliVar
   fi
+
   debug_vars "Variables set based on file extention" aaxc originalAudibleCliVar audibleCli
 
   # No point going on if no authcode found and the file is aax.
@@ -566,12 +559,19 @@ do
     validate_extra_files "${aax_file}"
   fi
 
+  # Set the needed params to decrypt the file. Needed in all command that require ffprobe or ffmpeg
+  # After validate_extra_files, since the -audible_key and -audible_iv are read in that function
+  if [[ ${aaxc} == "1" ]] ; then
+    decrypt_param="-audible_key ${aaxc_key} -audible_iv ${aaxc_iv}"
+  else
+    decrypt_param="-activation_bytes ${auth_code}"
+  fi
+
   validate_aax "${aax_file}"
   if [[ ${VALIDATE} == "1" ]] ; then
     # Don't bother doing anything else with this file.
     continue
   fi
-  
 
   # -----
   # Make sure everything is a variable.  Simplifying Command interpretation
@@ -653,13 +653,6 @@ do
   # and coders wanting to extend the script.
   debug_vars "Book and Variable values" title auth_code aaxc aaxc_key aaxc_iv mode aax_file container codec bitrate artist album_artist album album_date genre copyright narrator description publisher currentDirNameScheme output_directory currentFileNameScheme output_file metadata_file working_directory
 
-  # Set the needed params to decrypt the file. Needed in the main command as
-  # well as in the variable total_lenght
-  if [[ ${aaxc} == "1" ]] ; then
-    decrypt_param="-audible_key ${aaxc_key} -audible_iv ${aaxc_iv}"
-  else
-    decrypt_param="-activation_bytes ${auth_code}"
-  fi
 
   # Display the total length of the audiobook in format hh:mm:ss
   # 10#$var force base-10 interpretation. By default it's base-8, so values like 08 or 09 are not octal numbers
