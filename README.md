@@ -44,7 +44,6 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
 * **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file. Not needed if the source file is .aaxc.
-* --aaxc         Set the input file type to be `aaxc` instead of the default `aax`.
 * **-n** or **--no-clobber** If set and the target directory already exists, AAXtoMP3 will exit without overwriting anything.
 * **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
 * **-C** or **--complete_dir &lt;PATH&gt;** a directory to place aax files after they have been decoded successfully. Note make a back up of your aax files prior to using this option. Just in case something goes wrong.
@@ -62,7 +61,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **--dir-naming-scheme &lt;STRING&gt;** or **-D**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
-* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos. Needed if the input file is in the `aaxc` format.
+* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos. Needed for the files in the `aaxc` format.
 
 ## Options for interactiveAAXtoMP3
 * **-a** or **--advanced** Get more options to choose. Not used right now.
@@ -253,8 +252,9 @@ to download them. For example, to download all the books in your library in the 
 chapters's title and an HQ cover: `audible download --all --aaxc --cover --cover-size 1215 --chapter`.
 
 To make AAXtoMP3 use the additional data, specify the **--use-audible-cli-data**
-flag: it expects the cover and the chapter files to be in the same location of
-the AAX file.  The naming of these files must be the one set by audible-cli.
+flag: it expects the cover and the chapter files (and the voucher, if converting
+an aaxc file) to be in the same location of the AAX file.  The naming of these
+files must be the one set by audible-cli.
 
 For more information on how to use the `audible-cli` package, check out the git page [audible-cli](https://github.com/mkb79/audible-cli).
 
