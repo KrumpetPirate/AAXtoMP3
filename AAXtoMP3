@@ -9,7 +9,7 @@ usage=$'\nUsage: AAXtoMP3 [--flac] [--aac] [--opus ] [--single] [--level <COMPRE
 [--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [--authcode <AUTHCODE>] [--no-clobber]
 [--target_dir <PATH>] [--complete_dir <PATH>] [--validate] [--loglevel <LOGLEVEL>]
 [--keep-author <N>] [--author <AUTHOR>] [--{dir,file,chapter}-naming-scheme <STRING>]  
-[--use-audible-cli-data] [--aaxc] [--continue <CHAPTERNUMBER>] {FILES}\n'
+[--use-audible-cli-data] [--continue <CHAPTERNUMBER>] {FILES}\n'
 codec=libmp3lame            # Default encoder.
 extension=mp3               # Default encoder extension.
 level=-1                    # Compression level. Can be given for mp3, flac and opus. -1 = default/not specified.
@@ -32,7 +32,8 @@ continueAt=1                # Optional chapter to continue splitting the chapter
 keepArtist=-1               # Default off, if set change author metadata to use the passed argument as field
 authorOverride=             # Override the author, ignoring the metadata           
 audibleCli=0                # Default off, Use additional data gathered from mkb79/audible-cli
-aaxc=0                      # Use aaxc input file format, the default is the old aax.
+aaxc_key=                   # Initialize variables, in case we need them in debug_vars
+aaxc_iv=                    # Initialize variables, in case we need them in debug_vars
 
 # -----
 # Code tip Do not have any script above this point that calls a function or a binary.  If you do
@@ -81,8 +82,6 @@ while true; do
     --continue        ) continueAt="$2"; continue=1;                                    shift 2 ;;
                       # Use additional data got with mkb79/audible-cli
     --use-audible-cli-data ) audibleCli=1;                                              shift ;;
-                      # Use aaxc input file format. Implies --use-audible-cli-data
-    --aaxc            ) aaxc=1; audibleCli=1;                                           shift ;;
                       # Compression level
     --level           ) level="$2";                                                     shift 2 ;;
                       # Keep author number n
@@ -295,13 +294,6 @@ if [ -z $auth_code ]; then
   elif [ -r ~/.authcode ]; then
     auth_code=`head -1 ~/.authcode`
   fi
-fi
-# No point going on if no authcode found.
-# If we use aaxc as input, we do not need it
-if [ -z $auth_code ] || [ "${aaxc}" = "0" ]; then
-  echo "ERROR Missing authcode"
-  echo "$usage"
-  exit 1
 fi
 
 # -----
@@ -530,10 +522,35 @@ get_bitrate() {
   get_metadata_value bitrate | $GREP --only-matching '[0-9]\+'
 }
 
+# Save the original value, since in the for loop we overwrite
+# $audibleCli in case the file is aaxc. If the file is the
+# old aax, reset the variable to be the one passed by the user
+originalAudibleCliVar=$audibleCli
 # ========================================================================
 # Main Transcode Loop
 for aax_file
 do
+  # If the file is in aaxc format, set the proper variables
+  if [[ ${aax_file##*.} == "aaxc" ]]; then
+    # File is the new .aaxc
+    aaxc=1
+    audibleCli=1
+  else
+    # File is the old .aax
+    aaxc=0
+    # If some previous file in the loop are aaxc, the $audibleCli variable has been overwritten, so we reset it to the original one
+    audibleCli=$originalAudibleCliVar
+  fi
+  debug_vars "Variables set based on file extention" aaxc originalAudibleCliVar audibleCli
+
+  # No point going on if no authcode found and the file is aax.
+  # If we use aaxc as input, we do not need it
+  # if the string $auth_code is null and the format is not aaxc; quit. We need the authcode
+  if [ -z $auth_code ] && [ "${aaxc}" = "0" ]; then
+    echo "ERROR Missing authcode, can't decode $aax_file"
+    echo "$usage"
+    exit 1
+  fi
 
   # Validate the input aax file.  Note this happens no matter what.
   # It's just that if the validate option is set then we skip to next file.
@@ -641,7 +658,7 @@ do
   if [[ ${aaxc} == "1" ]] ; then
     decrypt_param="-audible_key ${aaxc_key} -audible_iv ${aaxc_iv}"
   else
-    decrypt_params="-activation_bytes ${auth_code}"
+    decrypt_param="-activation_bytes ${auth_code}"
   fi
 
   # Display the total length of the audiobook in format hh:mm:ss
