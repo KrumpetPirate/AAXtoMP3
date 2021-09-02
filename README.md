@@ -71,7 +71,7 @@ This script presents you the options you chose last time as default.
 When you get asked for the aax-file you may just drag'n'drop it to the terminal.
 
 ### [AUTHCODE]
-**Your** Audible auth code (it won't correctly decode otherwise) (required to decode the `aax` format).
+**Your** Audible auth code (it won't correctly decode otherwise) (not required to decode the `aaxc` format).
 
 #### Determining your own AUTHCODE
 You will need your authentication code that comes from Audible's servers. This 
