@@ -1,5 +1,5 @@
 # AAXtoMP3
-The purpose of this software is to convert AAX files to common MP3, M4A, M4B, flac and ogg formats
+The purpose of this software is to convert AAX (or AAXC) files to common MP3, M4A, M4B, flac and ogg formats
 through a basic bash script frontend to FFMPEG.
 
 Audible uses this file format to maintain DRM restrictions on their audio
@@ -14,10 +14,11 @@ Audible fails for some reason.
 
 ## Requirements
 * bash 4.3.42 or later tested
-* ffmpeg version 2.8.3 or later
+* ffmpeg version 2.8.3 or later (4.4 or later if the input file is `.aaxc`)
 * libmp3lame (came from lame package on Arch, not sure where else this is stored)
 * grep Some OS distributions do not have it installed.
 * sed Some OS versions will need to install gnu sed.
+* jq  Command-line JSON processor
 * mp4art used to add cover art to m4a and m4b files. Optional
 * mediainfo used to add additional media tags like narrator. Optional
 
@@ -43,7 +44,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **-f** or **--flac**   Flac Encoding and as default produces a single file.
 * **-o** or **--opus**   Ogg/Opus Encoding defaults to multiple file output by chapter. The extension is .ogg
 * **-a** or **--aac**    AAC Encoding and produce a m4a single files output.
-* **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file.
+* **-A** or **--authcode &lt;AUTHCODE&gt;** for this execution of the command use the provided &lt;AUTHCODE&gt; to decode the AAX file. Not needed if the source file is .aaxc.
 * **-n** or **--no-clobber** If set and the target directory already exists, AAXtoMP3 will exit without overwriting anything.
 * **-t** or **--target_dir &lt;PATH&gt;** change the default output location to the named &lt;PATH&gt;. Note the default location is ./Audiobook of the directory to which each AAX file resides.
 * **-C** or **--complete_dir &lt;PATH&gt;** a directory to place aax files after they have been decoded successfully. Note make a back up of your aax files prior to using this option. Just in case something goes wrong.
@@ -61,6 +62,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **--dir-naming-scheme &lt;STRING&gt;** or **-D**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
+* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos. Needed for the files in the `aaxc` format.
 
 ## Options for interactiveAAXtoMP3
 * **-a** or **--advanced** Get more options to choose. Not used right now.
@@ -69,20 +71,20 @@ This script presents you the options you chose last time as default.
 When you get asked for the aax-file you may just drag'n'drop it to the terminal.
 
 ### [AUTHCODE]
-**Your** Audible auth code (it won't correctly decode otherwise) (required).
+**Your** Audible auth code (it won't correctly decode otherwise) (not required to decode the `aaxc` format).
 
 #### Determining your own AUTHCODE
 You will need your authentication code that comes from Audible's servers. This 
 will be used by ffmpeg to perform the initial audio convert. You can obtain 
 this string from a tool like 
-[audible-activator](https://github.com/inAudible-NG/audible-activator).
+[audible-activator](https://github.com/inAudible-NG/audible-activator) or like [audible-cli](https://github.com/mkb79/audible-cli).
 
 #### Specifying the AUTHCODE.
 In order of __precidence__.
 1. __--authcode [AUTHCODE]__ The command line option. With the highest precedence.
 2. __.authcode__ If this file is placed in the current working directory and contains only the authcode it is used if the above is not.
 3. __~/.authcode__ a global config file for all the tools. And is used as the default if none of the above are specified.
-__Note:__ At least one of the above must be exist. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occur.
+__Note:__ At least one of the above must be exist if converting `aax` files. The code must also match the encoding for the user that owns the AAX file(s). If the authcode does not match the AAX file no transcoding will occur.
 
 ### MP3 Encoding
 * This is the **default** encoding
@@ -156,6 +158,7 @@ So you can use `--dir-naming-scheme '$(date +%Y)/$artist'`, but using `--file-na
 * If you don't want to have the books separated by author, use `--dir-naming-scheme '$genre/$title'`
 
 ### Installing Dependencies.
+In general, take a look at [command-not-found.com](https://command-not-found.com/)
 #### FFMPEG,FFPROBE
 __Ubuntu, Linux Mint, Debian__
 ```
@@ -233,7 +236,42 @@ __MacOS__
 ```
 brew install mediainfo
 ```
+## AAXC files
+The AAXC format is a new Audible encryption format, meant to replace the old AAX.
+The encryption has been updated, and now to decrypt the file the authcode
+is not sufficient, we need two "keys" which are unique for each audiobook.
+Since getting those keys is not simple, for now the method used to get them
+is handled by the package audible-cli, that stores
+them in a file when downloading the aaxc file. This means that in order to
+decrypt the aaxc files, they must be downloaded with audible-cli.
 
+## Audible-cli integration
+Some information are not present in the AAX file. For example the chapters's
+title, additional chapters division (Opening and End credits, Copyright and
+more).  Those information are avaiable via a non-public audible API. This
+[repo](https://github.com/mkb79/Audible) provides a python API wrapper, and the
+[audible-cli](https://github.com/mkb79/audible-cli) packege makes easy to get
+more info. In particular the flags **--cover --cover-size 1215 --chapter**
+downloads a better-quality cover (.jpg) and detailed chapter infos (.json).
+More info are avaiable on the package page.
+
+Some books might not be avaiable in the old `aax` format, but only in the newer
+`aaxc` format. In that case, you can use [audible-cli](https://github.com/mkb79/audible-cli)
+to download them. For example, to download all the books in your library in the newer `aaxc` format, as well as
+chapters's title and an HQ cover: `audible download --all --aaxc --cover --cover-size 1215 --chapter`.
+
+To make AAXtoMP3 use the additional data, specify the **--use-audible-cli-data**
+flag: it expects the cover and the chapter files (and the voucher, if converting
+an aaxc file) to be in the same location of the AAX file.  The naming of these
+files must be the one set by audible-cli. When converting aaxc files, the variable
+is automatically set, so be sure to follow the instructions in this paragraph.
+
+For more information on how to use the `audible-cli` package, check out the git page [audible-cli](https://github.com/mkb79/audible-cli).
+
+Please note that right now audible-cli is in dev stage, so keep in mind that the
+naming scheme of the additional files, the flags syntax and other things can
+change without warning.
+ 
 
 ## Anti-Piracy Notice
 Note that this project **does NOT ‘crack’** the DRM. It simply allows the user to
