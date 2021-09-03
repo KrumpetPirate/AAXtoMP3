@@ -2,7 +2,7 @@
 The purpose of this software is to convert AAX (or AAXC) files to common MP3, M4A, M4B, flac and ogg formats
 through a basic bash script frontend to FFMPEG.
 
-Audible uses this file format to maintain DRM restrictions on their audio
+Audible uses the AAX file format to maintain DRM restrictions on their audio
 books and if you download your book through your library it will be
 stored in this format.
 
@@ -13,25 +13,19 @@ create a method for you to download and store your books just in case
 Audible fails for some reason.
 
 ## Requirements
-* bash 4.3.42 or later tested
+* bash 3.2.57 or later tested
 * ffmpeg version 2.8.3 or later (4.4 or later if the input file is `.aaxc`)
-* libmp3lame (came from lame package on Arch, not sure where else this is stored)
-* grep Some OS distributions do not have it installed.
-* sed Some OS versions will need to install gnu sed.
-* jq  Command-line JSON processor
+* libmp3lame - (typically 'lame' in your system's package manager)
+* GNU grep - macOS or BSD users may need to install through package manager
+* GNU sed - see above
+* GNU find - see above
+* jq - only if `--use-audible-cli-data` is set or if converting an .aaxc file
 * mp4art used to add cover art to m4a and m4b files. Optional
 * mediainfo used to add additional media tags like narrator. Optional
 
-## OSX
-Thanks to thibaudcolas, this script has been tested on OSX 10.11.6 El Capitan. YMMV, but it should work for 
-conversions in OSX. It is recommended that you install GNU grep using 'brew install grep' for chapter padding to work.
-
-## AUR
-Thanks to kbabioch, this script has also been packaged in the [AUR](https://aur.archlinux.org/packages/aaxtomp3-git/). Note that you will still need to extract your activation bytes before use.
-
 ## Usage(s)
 ```
-bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESSIONLEVEL>] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX INPUT_FILES>...
+bash AAXtoMP3 [-f|--flac] [-o|--opus] [-a|-aac] [-s|--single] [--level <COMPRESSIONLEVEL>] [-c|--chaptered] [-e:mp3] [-e:m4a] [-e:m4b] [-A|--authcode <AUTHCODE>] [-n|--no-clobber] [-t|--target_dir <PATH>] [-C|--complete_dir <PATH>] [-V|--validate] [--use-audible-cli-data]] [-d|--debug] [-h|--help] [--continue <CHAPTERNUMBER>] <AAX/AAXC INPUT_FILES>...
 ```
 or if you want to get guided through the options
 ```
@@ -62,7 +56,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **--dir-naming-scheme &lt;STRING&gt;** or **-D**      Use a custom directory naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
-* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more infos. Needed for the files in the `aaxc` format.
+* **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more info. Needed for the files in the `aaxc` format.
 
 ## Options for interactiveAAXtoMP3
 * **-a** or **--advanced** Get more options to choose. Not used right now.
@@ -70,7 +64,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 This script presents you the options you chose last time as default.
 When you get asked for the aax-file you may just drag'n'drop it to the terminal.
 
-### [AUTHCODE]
+### AUTHCODE
 **Your** Audible auth code (it won't correctly decode otherwise) (not required to decode the `aaxc` format).
 
 #### Determining your own AUTHCODE
@@ -200,6 +194,7 @@ __MacOS__
 brew install ffmpeg
 brew install gnu-sed
 brew install grep
+brew install findutils
 ```
 
 #### mp4art/mp4chaps

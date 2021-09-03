@@ -202,9 +202,19 @@ debug_vars "Command line options as set" codec extension mode container targetdi
 # ========================================================================
 # Variable validation
 
+if [ $(uname) = 'Linux' ]; then
+    GREP="grep"
+    FIND="find"
+    SED="sed"
+else
+    GREP="ggrep"
+    FIND="gfind"
+    SED="gsed"
+fi
+
+
 # -----
 # Detect which annoying version of grep we have
-GREP=$(grep --version | grep -q GNU && echo "grep" || echo "ggrep")
 if ! [[ $(type -P "$GREP") ]]; then
   echo "$GREP (GNU grep) is not in your PATH"
   echo "Without it, this script will break."
@@ -213,8 +223,16 @@ if ! [[ $(type -P "$GREP") ]]; then
 fi
 
 # -----
+# Detect which annoying version of find we have
+if ! [[ $(type -P "$FIND") ]]; then
+  echo "$FIND (GNU find) is not in your PATH"
+  echo "Without it, this script will break."
+  echo "On macOS, you may want to try: brew install findutils"
+  exit 1
+fi
+
+# -----
 # Detect which annoying version of sed we have
-SED=$(sed --version 2>&1 | $GREP -q GNU && echo "sed" || echo "gsed")
 if ! [[ $(type -P "$SED") ]]; then
   echo "$SED (GNU sed) is not in your PATH"
   echo "Without it, this script will break."
@@ -429,7 +447,7 @@ validate_extra_files() {
 
   # Cover
   extra_dirname="$(dirname "${extra_media_file}")"
-  extra_find_command='find "${extra_dirname}" -maxdepth 1 -regex ".*/${extra_title##*/}_([0-9]+)\.jpg"'
+  extra_find_command='$FIND "${extra_dirname}" -maxdepth 1 -regex ".*/${extra_title##*/}_([0-9]+)\.jpg"'
   # We want the output of the find command, we will turn errexit on later
   set +e errexit
   extra_cover_file="$(eval ${extra_find_command})"
