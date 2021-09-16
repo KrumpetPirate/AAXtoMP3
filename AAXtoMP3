@@ -527,7 +527,7 @@ save_metadata() {
         to_entries |
         .[] |
         "CHAPTER\((.key))=\(((.value.start_offset_ms / (1000*60*60)) %24 | floor | pad(2))):\(((.value.start_offset_ms / (1000*60)) %60 | floor | pad(2))):\(((.value.start_offset_ms / 1000) %60 | floor | pad(2))).\((.value.start_offset_ms % 1000 | pad(3)))
-CHAPTER\((.key | pad(2)))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_file}"
+CHAPTER\((.key))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_file}"
     fi
   fi
   debug "Metadata file $metadata_file"
@@ -907,7 +907,7 @@ do
       if [ "${audibleCli}" == "1" ]; then
         mv "${tmp_chapter_file}" "${output_directory}/${currentFileNameScheme}.chapters.txt"
       else
-        ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%02d=%02d:%02d:%02.3f\nCHAPTER%02dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${currentFileNameScheme}.chapters.txt"
+        ffprobe -i "${aax_file}" -print_format csv -show_chapters 2>/dev/null | awk -F "," '{printf "CHAPTER%d=%02d:%02d:%02.3f\nCHAPTER%dNAME=%s\n", NR, $5/60/60, $5/60%60, $5%60, NR, $8}' > "${output_directory}/${currentFileNameScheme}.chapters.txt"
       fi
       mp4chaps -i "${output_file}"
     fi
