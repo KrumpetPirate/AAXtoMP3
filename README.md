@@ -160,6 +160,11 @@ sudo apt-get update
 sudo apt-get install ffmpeg libav-tools x264 x265 bc
 ```
 
+In Debian-based system's repositories the ffmpeg version is often outdated. If you want
+to convert .aaxc files, you need at least ffmpeg 4.4. So if your installed version
+needs to be updated, you can either install a custom repository that has the newer version,
+compile ffmpeg from source or download pre-compiled binaries.
+
 __Fedora__
 
 Fedora users need to enable the rpm fusion repository to install ffmpeg. Version 22 and upwards are currently supported. The following command works independent of your current version:
