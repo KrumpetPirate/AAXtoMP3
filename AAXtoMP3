@@ -658,9 +658,9 @@ do
 
   # If we defined a target directory, use it. Otherwise use the location of the AAX file
   if [ "x${targetdir}" != "x" ] ; then
-    output_directory="${targetdir}/${currentDirNameScheme}/"
+    output_directory="${targetdir}/${currentDirNameScheme}"
   else
-    output_directory="$(dirname "${aax_file}")/${currentDirNameScheme}/"
+    output_directory="$(dirname "${aax_file}")/${currentDirNameScheme}"
   fi
 
   # Define the output_file
