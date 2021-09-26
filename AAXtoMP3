@@ -44,8 +44,6 @@ while true; do
   case "$1" in
                       # Flac encoding
     -f | --flac       ) codec=flac; extension=flac; mode=single; container=flac;        shift ;;
-                      # Apple m4a music format.
-    -a | --aac        ) codec=copy; extension=m4a; mode=single; container=m4a;          shift ;;
                       # Ogg Format
     -o | --opus       ) codec=libopus; extension=opus; container=ogg;                   shift ;;
                       # If appropriate use only a single file output.
@@ -55,7 +53,7 @@ while true; do
                       # This is the same as --single option.
     -e:mp3            ) codec=libmp3lame; extension=mp3; mode=single; container=mp3;    shift ;;
                       # Identical to --acc option.
-    -e:m4a            ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
+    -e:m4a | -a | --aac ) codec=copy; extension=m4a; mode=single; container=mp4;          shift ;;
                       # Similar to --aac but specific to audio books
     -e:m4b            ) codec=copy; extension=m4b; mode=single; container=mp4;          shift ;;
                       # Change the working dir from AAX directory to what you choose.
