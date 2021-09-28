@@ -57,6 +57,7 @@ bash interactiveAAXtoMP3 [-a|--advanced] [-h|--help]
 * **--file-naming-scheme &lt;STRING&gt;** or **-F**    Use a custom file naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--chapter-naming-scheme &lt;STRING&gt;**  Use a custom chapter naming scheme, with variables. See [below](#custom-naming-scheme) for more info.
 * **--use-audible-cli-data** Use additional data got with mkb79/audible-cli. See [below](#audible-cli-integration) for more info. Needed for the files in the `aaxc` format.
+* **--ffmpeg-path**  Set the ffmpeg/ffprobe binaries folder. Both of them must be executable and in the same folder.
 
 ## Options for interactiveAAXtoMP3
 * **-a** or **--advanced** Get more options to choose. Not used right now.
@@ -164,6 +165,9 @@ In Debian-based system's repositories the ffmpeg version is often outdated. If y
 to convert .aaxc files, you need at least ffmpeg 4.4. So if your installed version
 needs to be updated, you can either install a custom repository that has the newer version,
 compile ffmpeg from source or download pre-compiled binaries.
+You can then tell AAXtoMP3 to use the compiled binaries with the `--ffmpeg-path` flag.
+You need to specify the folder where the ffmpeg and ffprobe binaries are. Make sure
+they are both executable.
 
 __Fedora__
 
@@ -244,6 +248,7 @@ Since getting those keys is not simple, for now the method used to get them
 is handled by the package audible-cli, that stores
 them in a file when downloading the aaxc file. This means that in order to
 decrypt the aaxc files, they must be downloaded with audible-cli.
+Note that you need at least [ffmpeg 4.4](#FFMPEG,FFPROBE).
 
 ## Audible-cli integration
 Some information are not present in the AAX file. For example the chapters's
