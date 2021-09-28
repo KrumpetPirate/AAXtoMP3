@@ -248,7 +248,7 @@ Since getting those keys is not simple, for now the method used to get them
 is handled by the package audible-cli, that stores
 them in a file when downloading the aaxc file. This means that in order to
 decrypt the aaxc files, they must be downloaded with audible-cli.
-Note that you need at least [ffmpeg 4.4](#FFMPEG,FFPROBE).
+Note that you need at least [ffmpeg 4.4](#ffmpegffprobe).
 
 ## Audible-cli integration
 Some information are not present in the AAX file. For example the chapters's
