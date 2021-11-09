@@ -751,7 +751,6 @@ do
   fi
   # Grab the cover art if available.
   cover_file="${output_directory}/cover.jpg"
-  extra_crop_cover=''
   if [ "${continue}" == "0" ]; then
     if [ "${audibleCli}" == "1" ]; then
       # We have a better quality cover file, copy it.
@@ -759,12 +758,6 @@ do
         log "Copy cover file to ${cover_file}..."
       fi
       cp "${extra_cover_file}" "${cover_file}"
-
-      # We now set a variable, ${extra_crop_cover}, which contains an additional
-      # ffmpeg flag. It crops the cover so the width and the height is divisible by two.
-      # Since the standard (in the aax file) image resolution is 512, we set the flag
-      # only if we use a custom cover art.
-      extra_crop_cover='-vf crop=trunc(iw/2)*2:trunc(ih/2)*2'
     else
       # Audible-cli not used, extract the cover from the aax file
       if [ "$((${loglevel} > 1))" == "1" ]; then
@@ -772,6 +765,18 @@ do
       fi
       </dev/null "$FFMPEG" -loglevel error -activation_bytes "${auth_code}" -i "${aax_file}" -an -codec:v copy "${cover_file}"
     fi
+  fi
+
+  extra_crop_cover=''
+  cover_width=$(ffprobe -i "${cover_file}" 2>&1 | grep -Po "[0-9]+(?=x[0-9]+)")
+  if [ "$(( ${cover_width} % 2 ))" == "1" ]; then
+    if [ "$((${loglevel} > 1))" == "1" ]; then
+      log "Cover ${cover_file} has odd width ${cover_width}, setting extra_crop_cover to make even."
+    fi
+    # We now set a variable, ${extra_crop_cover}, which contains an additional
+    # ffmpeg flag. It crops the cover so the width and the height is divisible by two.
+    # Set the flag only if we use a cover art with an odd width.
+    extra_crop_cover='-vf crop=trunc(iw/2)*2:trunc(ih/2)*2'
   fi
 
   # -----
