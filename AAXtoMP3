@@ -683,6 +683,7 @@ do
 
   if [[ "${noclobber}" = "1" ]] && [[ -d "${output_directory}" ]]; then
     log "Noclobber enabled but directory '${output_directory}' exists. Skipping to avoid overwriting"
+    rm -f "${metadata_file}"
     continue
   fi
   mkdir -p "${output_directory}"
