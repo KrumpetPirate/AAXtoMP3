@@ -959,6 +959,11 @@ do
     fi
   fi
 
+  if [ -f "${cover_file}" ]; then
+    if [ "$loglevel" -gt 1 ]; then log "Adding cover art"; fi
+    mp4art --add "${cover_file}" "${output_file}"
+  fi
+
   # -----
   # Announce that we have completed the transcode
   if [ "$((${loglevel} > 0))" == "1" ]; then
