@@ -559,7 +559,7 @@ CHAPTER\((.key))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_
         if [[ ! -z "${lib_entry}" ]]; then
           series_title=$(echo "${lib_entry}" | awk -F '\t' '{print $6}')
           series_sequence=$(echo "${lib_entry}" | awk -F '\t' '{print $7}')
-          sed -i "/^  Metadata:/a\\
+          $SED -i "/^  Metadata:/a\\
     series          : ${series_title}\\
     series_sequence : ${series_sequence}" "${metadata_file}"
         fi
