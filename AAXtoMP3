@@ -555,7 +555,7 @@ CHAPTER\((.key))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_
     if [[ "${library_file_exists}" == 1 ]]; then
       asin=$(jq -r '.content_metadata.content_reference.asin' "${extra_chapter_file}")
       if [[ ! -z "${asin}" ]]; then
-        lib_entry=$(grep "^${asin}" "${library_file}")
+        lib_entry=$($GREP "^${asin}" "${library_file}")
         if [[ ! -z "${lib_entry}" ]]; then
           series_title=$(echo "${lib_entry}" | awk -F '\t' '{print $6}')
           series_sequence=$(echo "${lib_entry}" | awk -F '\t' '{print $7}')
@@ -800,7 +800,7 @@ do
   fi
 
   extra_crop_cover=''
-  cover_width=$(ffprobe -i "${cover_file}" 2>&1 | grep -Po "[0-9]+(?=x[0-9]+)")
+  cover_width=$(ffprobe -i "${cover_file}" 2>&1 | $GREP -Po "[0-9]+(?=x[0-9]+)")
   if (( ${cover_width} % 2 == 1 )); then
     if [ "$((${loglevel} > 1))" == "1" ]; then
       log "Cover ${cover_file} has odd width ${cover_width}, setting extra_crop_cover to make even."
