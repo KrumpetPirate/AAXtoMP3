@@ -960,7 +960,7 @@ do
   fi
 
   if [ -f "${cover_file}" ]; then
-    if [ "$loglevel" -gt 1 ]; then log "Adding cover art"; fi
+    log "Adding cover art"
     mp4art --add "${cover_file}" "${output_file}"
   fi
 
