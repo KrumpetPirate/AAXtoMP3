@@ -20,7 +20,6 @@ Audible fails for some reason.
 * GNU sed - see above
 * GNU find - see above
 * jq - only if `--use-audible-cli-data` is set or if converting an .aaxc file
-* mp4art used to add cover art to m4a and m4b files. Optional
 * mediainfo used to add additional media tags like narrator. Optional
 
 ## Usage(s)
@@ -209,24 +208,6 @@ brew install ffmpeg
 brew install gnu-sed
 brew install grep
 brew install findutils
-```
-
-#### mp4art/mp4chaps
-_Note: This is an optional dependency._
-
-__Ubuntu, Linux Mint, Debian__
-```
-sudo apt-get update
-sudo apt-get install mp4v2-utils
-```
-__CentOS, RHEL & Fedora__
-```
-# CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
-yum install mp4v2-utils
-```
-__MacOS__
-```
-brew install mp4v2
 ```
 
 #### mediainfo
