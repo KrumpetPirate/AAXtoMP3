@@ -919,7 +919,7 @@ do
             -map 1:0 \
             -acodec ${chapter_codec} \
             -metadata:s:v title="Album cover" \
-            -metadata:s:v comment="Cover (Front)" \
+            -metadata:s:v comment="Cover (front)" \
             -metadata track="${chapternum}" \
             -metadata title="${chapter}" \
             -metadata:s:a title="${chapter}" \
