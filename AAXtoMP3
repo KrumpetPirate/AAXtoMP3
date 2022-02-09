@@ -968,7 +968,29 @@ do
 
   if [ -f "${cover_file}" ]; then
     log "Adding cover art"
-    mp4art --add "${cover_file}" "${output_file}"
+    # FFMGEP does not support MPEG-4 containers fully #
+    if [ "${container}" == "mp4" ] ; then
+      mp4art --add "${cover_file}" "${output_file}"
+    # FFMPEG for everything else #
+    else
+      # Create temporary output file name - ensure extention matches previous appropriate output file to keep ffmpeg happy
+      cover_output_file="${output_file%.*}.cover.${output_file##*.}"
+      # Copy audio stream from current output, and video stream from cover file, setting appropriate metadata
+      </dev/null "$FFMPEG" -loglevel quiet \
+        -nostats \
+        -i "${output_file}" \
+        -i "${cover_file}" \
+        -map 0:a:0 \
+        -map 1:v:0 \
+        -acodec copy \
+        -vcodec copy \
+        -id3v2_version 3 \
+        -metadata:s:v title="Album cover" \
+        -metadata:s:v comment="Cover (front)" \
+        "${cover_output_file}"
+        # Replace original output file with version including cover
+        mv "${cover_output_file}" "${output_file}"
+    fi
   fi
 
   # -----

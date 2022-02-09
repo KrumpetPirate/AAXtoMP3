@@ -220,13 +220,17 @@ brew install findutils
 ```
 
 #### mp4art/mp4chaps
-_Note: This is an optional dependency._
+_Note: This is an optional dependency, required for adding cover art to m4a and b4b files only._
 
 __Ubuntu, Linux Mint, Debian__
 ```
 sudo apt-get update
 sudo apt-get install mp4v2-utils
 ```
+
+On Debian and Ubuntu the mp4v2-utils package has been deprecated and removed, as the upsteam project is no longer maintained.
+The package was removed in Debian Buster, and Ubuntu Focal [ 20.04 ].
+
 __CentOS, RHEL & Fedora__
 ```
 # CentOS/RHEL and Fedora users make sure that you have enabled atrpms repository in system. Let’s begin installing FFmpeg as per your operating system.
