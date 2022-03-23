@@ -288,7 +288,7 @@ fi
 
 # -----
 # Detect if we need mp4art for cover additions to m4a & m4b files.
-if [[ "x${container}" == "xmp4" && "x$(type -P mp4art)" == "x" ]]; then
+if [[ "x${container}" == "xmp4" && "x$(type -P mp4art)" == "x" && ! "$mode" == "chaptered"  ]]; then
   echo "WARN mp4art was not found on your env PATH variable"
   echo "Without it, this script will not be able to add cover art to"
   echo "m4b files. Note if there are no other errors the AAXtoMP3 will"
@@ -807,8 +807,8 @@ do
   fi
 
   extra_crop_cover=''
-  cover_width=$(ffprobe -i "${cover_file}" 2>&1 | $GREP -Po "[0-9]+(?=x[0-9]+)")
-  if (( ${cover_width} % 2 == 1 )); then
+  cover_width=$(ffprobe -i "${cover_file}" 2>&1 | $GREP -Po "[0-9]+(?=x[0-9]+)" | tail -n 1)
+  if [[ $(($cover_width % 2)) -eq 1 ]]; then
     if [ "$((${loglevel} > 1))" == "1" ]; then
       log "Cover ${cover_file} has odd width ${cover_width}, setting extra_crop_cover to make even."
     fi
@@ -967,7 +967,7 @@ do
     fi
   fi
 
-  if [ -f "${cover_file}" ]; then
+  if [[ -f "${cover_file}" && ! "$mode" == "chaptered" ]]; then
     log "Adding cover art"
     # FFMGEP does not support MPEG-4 containers fully #
     if [ "${container}" == "mp4" ] ; then
@@ -1009,6 +1009,14 @@ do
       log "Moving Transcoded ${aax_file} to ${completedir}"
     fi
     mv "${aax_file}" "${completedir}"
+    if [[ ${audibleCli} -eq 1 ]]; then
+        if [ "$((${loglevel} > 0))" == "1" ]; then
+            log "Moving remaining audible files to ${completedir}"
+        fi
+        [[ -f "${aax_file%%-AAX_??_??.aaxc}_\((*)\).jpg" ]] && mv -v "${aax_file%%-AAX_??_??.aaxc}_\((*)\).jpg" "${completedir}"
+        [[ -f "${aax_file%%.aaxc}.voucher" ]] && mv -v "${aax_file%%.aaxc}.voucher" "${completedir}"
+        [[ -f "${aax_file%%-AAX_??_??.aaxc}-chapters.json" ]] && mv -v "${aax_file%%-AAX_??_??.aaxc}-chapters.json" "${completedir}"
+    fi
   fi
 
 done
