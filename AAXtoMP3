@@ -967,7 +967,7 @@ do
     fi
   fi
 
-  if [ -f "${cover_file}" ]; then
+  if [ -f "${cover_file}" ] && [ "${mode}" != "chaptered" ] ; then
     log "Adding cover art"
     # FFMGEP does not support MPEG-4 containers fully #
     if [ "${container}" == "mp4" ] ; then
