@@ -562,10 +562,10 @@ CHAPTER\((.key))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_
     if [[ "${library_file_exists}" == 1 ]]; then
       asin=$(jq -r '.content_metadata.content_reference.asin' "${extra_chapter_file}")
       if [[ ! -z "${asin}" ]]; then
-        lib_entry=$($GREP "^${asin}" "${library_file}")
+        lib_entry=$(jq -r ".|map(select(.asin == \"${asin}\")) | length" "${library_file}")
         if [[ ! -z "${lib_entry}" ]]; then
-          series_title=$(echo "${lib_entry}" | awk -F '\t' '{print $6}')
-          series_sequence=$(echo "${lib_entry}" | awk -F '\t' '{print $7}')
+          series_title=$(jq -r ".|map(select(.asin == \"${asin}\"))[0].series_title" "${library_file}")
+          series_sequence=$(jq -r ".|map(select(.asin == \"${asin}\"))[0].series_sequence" "${library_file}")
           $SED -i "/^  Metadata:/a\\
     series          : ${series_title}\\
     series_sequence : ${series_sequence}" "${metadata_file}"
