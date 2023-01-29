@@ -564,11 +564,21 @@ CHAPTER\((.key))NAME=\(.value.title)"' "${extra_chapter_file}" > "${tmp_chapter_
       if [[ ! -z "${asin}" ]]; then
         lib_entry=$($GREP "^${asin}" "${library_file}")
         if [[ ! -z "${lib_entry}" ]]; then
-          series_title=$(echo "${lib_entry}" | awk -F '\t' '{print $6}')
-          series_sequence=$(echo "${lib_entry}" | awk -F '\t' '{print $7}')
+          # Build additional metadata from library.tsv
+          idx=1 ; tmpmetadata=""
+          # Remove '\r' is important
+          for meta in $(head -n 1 "${library_file}" | tr -d '\r')
+          do
+            tmpvar=$(echo "${lib_entry}" | awk -v idx=$idx -F '\t' '{print $idx}')
+            declare -g "$meta"="$tmpvar"
+            tmpmetadata=$tmpmetadata"\n    $meta\t: $tmpvar"
+            idx=$(($idx+1))
+            debug "library.tsv: $meta = $tmpvar"
+          done
+          tmpmetadata=${tmpmetadata:2}
+          debug "$tmpmetadata"
           $SED -i "/^  Metadata:/a\\
-    series          : ${series_title}\\
-    series_sequence : ${series_sequence}" "${metadata_file}"
+$tmpmetadata" "${metadata_file}"
         fi
       fi
     fi
