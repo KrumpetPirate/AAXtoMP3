@@ -789,7 +789,7 @@ do
     # -----
   fi
   # Grab the cover art if available.
-  cover_file="${output_directory}/cover.jpg"
+  cover_file="${output_directory}/${currentFileNameScheme}.jpg"
   if [ "${continue}" == "0" ]; then
     if [ "${audibleCli}" == "1" ]; then
       # We have a better quality cover file, copy it.
