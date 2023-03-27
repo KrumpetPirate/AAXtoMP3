@@ -970,7 +970,7 @@ do
   if [ -f "${cover_file}" ]; then
     log "Adding cover art"
     # FFMPEG does not support MPEG-4 containers fully #
-    if [ "${container}" == "mp4" -a -f ${output_file} ] ; then
+    if [ "${container}" == "mp4" -a -f "${output_file}" ] ; then
       mp4art --add "${cover_file}" "${output_file}"
     # FFMPEG for everything else #
     else
